@@ -1,259 +1,382 @@
 // public/widget.js
+// AURA • Review Widget v1.0
+// Renders reviews + submission form inside #aura-review-widget
+
 (function () {
-  const API_BASE = "https://review-ugc-engine.onrender.com/api/ugc";
+  const ENGINE_ORIGIN = "https://review-ugc-engine.onrender.com";
 
-  function resolveProductId(container) {
-    // 1) Explicit override on the container
-    const explicit = container.getAttribute("data-product-id");
-    if (explicit) return explicit;
-
-    // 2) Shopify detection
-    try {
-      const sa = window.ShopifyAnalytics;
-      if (sa && sa.meta && sa.meta.product && sa.meta.product.id) {
-        return `shopify:${sa.meta.product.id}`;
-      }
-    } catch (e) {
-      // ignore
+  function ready(fn) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", fn);
+    } else {
+      fn();
     }
-
-    // 3) Meta tag override (for headless / CMS)
-    const meta = document.querySelector('meta[name="aura:product-id"]');
-    if (meta && meta.content) return meta.content;
-
-    // 4) Fallback: URL-based ID (works everywhere)
-    return `url:${location.hostname}${location.pathname}`;
   }
 
-  function injectStyles() {
+  function ensureStyles() {
     if (document.getElementById("aura-review-widget-styles")) return;
 
     const css = `
-      .aura-reviews {
+      #aura-review-widget {
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-        color: #0b1020;
-        max-width: 600px;
+        color: #e7f6ff;
+        background: radial-gradient(circle at top, rgba(0,240,255,0.12), rgba(5,8,15,0.98));
+        border-radius: 20px;
+        border: 1px solid rgba(0,240,255,0.24);
+        padding: 20px;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+        max-width: 640px;
+        margin: 24px auto;
       }
-      .aura-reviews h3 {
-        margin: 0 0 8px;
-        font-size: 18px;
-        font-weight: 600;
-      }
-      .aura-reviews p {
-        margin: 0 0 8px;
-        font-size: 13px;
-        color: #4b5570;
-      }
-      .aura-reviews-list {
-        border: 1px solid #e1e5f0;
-        border-radius: 12px;
-        padding: 12px 14px;
-        margin-bottom: 16px;
-        max-height: 260px;
-        overflow-y: auto;
-        background: #ffffff;
-      }
-      .aura-review-item {
-        padding: 8px 0;
-        border-bottom: 1px solid #eef1f7;
-      }
-      .aura-review-item:last-child {
-        border-bottom: none;
-      }
-      .aura-review-rating {
-        font-size: 13px;
-        color: #f59e0b;
-        margin-bottom: 4px;
-      }
-      .aura-review-text {
-        font-size: 13px;
-      }
-      .aura-review-meta {
-        font-size: 11px;
-        color: #9aa3bd;
-        margin-top: 4px;
-      }
-      .aura-review-form {
-        border-radius: 12px;
-        border: 1px solid #e1e5f0;
-        padding: 12px 14px;
-        background: #f8fafc;
-      }
-      .aura-field {
-        margin-bottom: 8px;
-        font-size: 13px;
-      }
-      .aura-field label {
-        display: block;
-        margin-bottom: 4px;
-        font-weight: 500;
-      }
-      .aura-field input,
-      .aura-field textarea,
-      .aura-field select {
-        width: 100%;
-        border-radius: 8px;
-        border: 1px solid #d0d7ec;
-        padding: 6px 8px;
-        font-size: 13px;
-        font-family: inherit;
+
+      #aura-review-widget * {
         box-sizing: border-box;
       }
-      .aura-field textarea {
-        resize: vertical;
-        min-height: 60px;
+
+      .aura-rw-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
       }
-      .aura-submit-btn {
-        border: none;
-        border-radius: 999px;
-        padding: 8px 16px;
-        background: linear-gradient(135deg, #00f0ff, #00b3ff);
-        color: #020617;
-        font-size: 13px;
+
+      .aura-rw-title {
+        font-size: 1.25rem;
         font-weight: 600;
-        cursor: pointer;
+        letter-spacing: 0.03em;
       }
-      .aura-message {
+
+      .aura-rw-badge {
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(0,240,255,0.35);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.11em;
+        opacity: 0.9;
+      }
+
+      .aura-rw-list {
+        margin: 12px 0 18px;
+        max-height: 260px;
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+
+      .aura-rw-review {
+        border-radius: 14px;
+        border: 1px solid rgba(0,240,255,0.16);
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        background: rgba(5,8,15,0.9);
+      }
+
+      .aura-rw-review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+      }
+
+      .aura-rw-rating {
+        color: #ffdf6b;
+        font-size: 0.9rem;
+      }
+
+      .aura-rw-name {
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+
+      .aura-rw-text {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        opacity: 0.95;
+      }
+
+      .aura-rw-empty {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        font-style: italic;
+      }
+
+      .aura-rw-form {
+        border-top: 1px solid rgba(0,240,255,0.2);
+        padding-top: 12px;
+        margin-top: 8px;
+      }
+
+      .aura-rw-form-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .aura-rw-form-row .aura-rw-field {
+        flex: 1;
+      }
+
+      .aura-rw-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        opacity: 0.7;
+        margin-bottom: 4px;
+        display: block;
+      }
+
+      .aura-rw-input,
+      .aura-rw-textarea,
+      .aura-rw-select {
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid rgba(0,240,255,0.25);
+        background: rgba(3,6,14,0.9);
+        color: #e7f6ff;
+        padding: 7px 9px;
+        font-size: 0.85rem;
+        outline: none;
+      }
+
+      .aura-rw-textarea {
+        min-height: 64px;
+        resize: vertical;
+      }
+
+      .aura-rw-input:focus,
+      .aura-rw-textarea:focus,
+      .aura-rw-select:focus {
+        border-color: #00f0ff;
+        box-shadow: 0 0 0 1px rgba(0,240,255,0.3);
+      }
+
+      .aura-rw-submit {
+        margin-top: 4px;
+        width: 100%;
+        border-radius: 999px;
+        border: none;
+        padding: 9px 14px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: linear-gradient(90deg, #00f0ff, #00c8ff);
+        color: #02040a;
+        cursor: pointer;
+        box-shadow: 0 12px 36px rgba(0,240,255,0.35);
+      }
+
+      .aura-rw-submit:disabled {
+        opacity: 0.6;
+        cursor: default;
+        box-shadow: none;
+      }
+
+      .aura-rw-status {
         margin-top: 6px;
-        font-size: 12px;
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+
+      .aura-rw-status--ok {
+        color: #5fffd3;
+      }
+
+      .aura-rw-status--err {
+        color: #ff4f6b;
       }
     `;
 
-    const style = document.createElement("style");
-    style.id = "aura-review-widget-styles";
-    style.textContent = css;
-    document.head.appendChild(style);
+    const styleEl = document.createElement("style");
+    styleEl.id = "aura-review-widget-styles";
+    styleEl.textContent = css;
+    document.head.appendChild(styleEl);
   }
 
-  function renderWidget(container) {
-    injectStyles();
+  async function fetchApprovedReviews(productId) {
+    const url =
+      ENGINE_ORIGIN + "/api/ugc/product/" + encodeURIComponent(productId);
 
-    const productId = resolveProductId(container);
-
-    container.innerHTML = `
-      <div class="aura-reviews">
-        <h3>Customer Reviews</h3>
-        <div class="aura-reviews-list" id="aura-reviews-list">
-          <p>Loading reviews…</p>
-        </div>
-
-        <div class="aura-review-form">
-          <h3>Write a review</h3>
-          <form id="aura-review-form">
-            <div class="aura-field">
-              <label for="aura-rating">Rating</label>
-              <select id="aura-rating" required>
-                <option value="">Select…</option>
-                <option value="5">5 – Amazing</option>
-                <option value="4">4 – Good</option>
-                <option value="3">3 – Okay</option>
-                <option value="2">2 – Poor</option>
-                <option value="1">1 – Bad</option>
-              </select>
-            </div>
-            <div class="aura-field">
-              <label for="aura-text">Review</label>
-              <textarea id="aura-text" required></textarea>
-            </div>
-            <div class="aura-field">
-              <label for="aura-name">Name (optional)</label>
-              <input id="aura-name" placeholder="Your name" />
-            </div>
-            <div class="aura-field">
-              <label for="aura-media">Photo URL (optional)</label>
-              <input id="aura-media" placeholder="https://…" />
-            </div>
-            <button type="submit" class="aura-submit-btn">Submit review</button>
-            <div class="aura-message" id="aura-message"></div>
-          </form>
-        </div>
-      </div>
-    `;
-
-    const listEl = container.querySelector("#aura-reviews-list");
-    const formEl = container.querySelector("#aura-review-form");
-    const msgEl = container.querySelector("#aura-message");
-
-    async function loadReviews() {
-      try {
-        const res = await fetch(`${API_BASE}/product/${encodeURIComponent(productId)}`);
-        const data = await res.json();
-
-        if (!Array.isArray(data) || data.length === 0) {
-          listEl.innerHTML = `<p>No reviews yet. Be the first to review this product.</p>`;
-          return;
-        }
-
-        listEl.innerHTML = "";
-        data.forEach(item => {
-          const div = document.createElement("div");
-          div.className = "aura-review-item";
-          const created = item.created_at ? new Date(item.created_at).toLocaleDateString() : "";
-          const name = item.customer_id || "Customer";
-          div.innerHTML = `
-            <div class="aura-review-rating">⭐ ${item.rating} / 5</div>
-            <div class="aura-review-text">${item.text || ""}</div>
-            <div class="aura-review-meta">${name} • ${created}</div>
-          `;
-          listEl.appendChild(div);
-        });
-      } catch (e) {
-        console.error(e);
-        listEl.innerHTML = `<p>Could not load reviews.</p>`;
-      }
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error("Failed to fetch reviews, status " + res.status);
     }
 
-    formEl.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      msgEl.textContent = "Submitting…";
+    const data = await res.json();
 
-      const rating = parseInt(container.querySelector("#aura-rating").value, 10);
-      const text = container.querySelector("#aura-text").value.trim();
-      const name = container.querySelector("#aura-name").value.trim() || "anonymous";
-      const media = container.querySelector("#aura-media").value.trim() || null;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data.reviews)) return data.reviews;
+    if (data && typeof data === "object") return [data];
+
+    return [];
+  }
+
+  function render(container, productId, reviews) {
+    const averageRating =
+      reviews.length > 0
+        ? (
+            reviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) /
+            reviews.length
+          ).toFixed(1)
+        : null;
+
+    const stars = (rating) => "★".repeat(rating || 0) + "☆".repeat(5 - (rating || 0));
+
+    const reviewsHtml =
+      reviews.length === 0
+        ? `<div class="aura-rw-empty">No reviews yet – be the first to share your experience.</div>`
+        : reviews
+            .slice(0, 20)
+            .map((r) => {
+              const name =
+                r.customer_id ||
+                r.customer_name ||
+                "Verified customer";
+              const rating = Number(r.rating) || 5;
+              const text = r.text || "";
+              return `
+                <article class="aura-rw-review">
+                  <div class="aura-rw-review-header">
+                    <div class="aura-rw-rating">${stars(rating)}</div>
+                    <div class="aura-rw-name">${name}</div>
+                  </div>
+                  <div class="aura-rw-text">${text}</div>
+                </article>
+              `;
+            })
+            .join("");
+
+    container.innerHTML = `
+      <div class="aura-rw-header">
+        <div class="aura-rw-title">Customer Reviews</div>
+        <div class="aura-rw-badge">
+          AURA • UGC Engine
+        </div>
+      </div>
+
+      ${
+        averageRating
+          ? `<div style="font-size:0.9rem; margin-bottom:6px; opacity:0.85;">
+               Average rating <strong>${averageRating}/5</strong> from ${reviews.length} review${
+              reviews.length === 1 ? "" : "s"
+            }.
+             </div>`
+          : ""
+      }
+
+      <div class="aura-rw-list">${reviewsHtml}</div>
+
+      <form class="aura-rw-form">
+        <div class="aura-rw-form-row">
+          <div class="aura-rw-field">
+            <label class="aura-rw-label">Name (optional)</label>
+            <input class="aura-rw-input" name="name" autocomplete="name" />
+          </div>
+          <div class="aura-rw-field" style="max-width:120px;">
+            <label class="aura-rw-label">Rating</label>
+            <select class="aura-rw-select" name="rating" required>
+              <option value="5">★★★★★</option>
+              <option value="4">★★★★☆</option>
+              <option value="3">★★★☆☆</option>
+              <option value="2">★★☆☆☆</option>
+              <option value="1">★☆☆☆☆</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="aura-rw-label">Your review</label>
+        <textarea class="aura-rw-textarea" name="text" required placeholder="Tell other shoppers what you think..."></textarea>
+
+        <label class="aura-rw-label" style="margin-top:6px;">Photo URL (optional)</label>
+        <input class="aura-rw-input" name="media_url" placeholder="https://..." />
+
+        <button type="submit" class="aura-rw-submit">Submit review</button>
+        <div class="aura-rw-status" aria-live="polite"></div>
+      </form>
+    `;
+
+    const form = container.querySelector(".aura-rw-form");
+    const statusEl = container.querySelector(".aura-rw-status");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusEl.textContent = "";
+      statusEl.className = "aura-rw-status";
+      const submitBtn = form.querySelector(".aura-rw-submit");
+      submitBtn.disabled = true;
+
+      const formData = new FormData(form);
+      const payload = {
+        customer_id: (formData.get("name") || "").trim() || "Anonymous",
+        product_id: productId,
+        rating: Number(formData.get("rating") || 5),
+        text: (formData.get("text") || "").trim(),
+        media_url: (formData.get("media_url") || "").trim() || null,
+        channel: "web-widget"
+      };
 
       try {
-        const res = await fetch(`${API_BASE}/submit`, {
+        const res = await fetch(ENGINE_ORIGIN + "/api/ugc/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customerId: name,
-            productId,
-            type: "review",
-            rating,
-            text,
-            mediaUrl: media
-          })
+          body: JSON.stringify(payload)
         });
 
         if (!res.ok) {
-          msgEl.textContent = "Something went wrong. Please try again.";
-          return;
+          throw new Error("Submit failed with status " + res.status);
         }
 
-        msgEl.textContent = "Thanks! Your review is awaiting approval.";
-        formEl.reset();
+        statusEl.textContent =
+          "Thanks for your review. It will appear here once approved.";
+        statusEl.classList.add("aura-rw-status--ok");
+        form.reset();
+        form.querySelector('select[name="rating"]').value = "5";
       } catch (err) {
-        console.error(err);
-        msgEl.textContent = "Could not submit. Please try again.";
+        console.error("[AURA Widget] Submit failed:", err);
+        statusEl.textContent =
+          "Sorry, something went wrong. Please try again.";
+        statusEl.classList.add("aura-rw-status--err");
+      } finally {
+        submitBtn.disabled = false;
       }
     });
-
-    loadReviews();
   }
 
-  function init() {
-    const container =
-      document.getElementById("aura-review-widget") ||
-      document.querySelector("[data-aura-review-widget]");
-
+  async function init() {
+    const container = document.getElementById("aura-review-widget");
     if (!container) return;
-    renderWidget(container);
+
+    const productId =
+      container.getAttribute("data-product-id") ||
+      "url:" + location.hostname + location.pathname;
+
+    ensureStyles();
+
+    // Skeleton while loading
+    container.innerHTML = `
+      <div class="aura-rw-header">
+        <div class="aura-rw-title">Customer Reviews</div>
+        <div class="aura-rw-badge">Loading…</div>
+      </div>
+      <div class="aura-rw-empty">Fetching reviews from AURA UGC Engine…</div>
+    `;
+
+    try {
+      const reviews = await fetchApprovedReviews(productId);
+      render(container, productId, reviews);
+    } catch (err) {
+      console.error("[AURA Widget] Failed to load reviews:", err);
+      container.innerHTML = `
+        <div class="aura-rw-header">
+          <div class="aura-rw-title">Customer Reviews</div>
+          <div class="aura-rw-badge">AURA • UGC Engine</div>
+        </div>
+        <div class="aura-rw-empty">
+          We couldn't load reviews right now. You can still submit a review below.
+        </div>
+      `;
+    }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
+  ready(init);
 })();

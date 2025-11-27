@@ -1,15 +1,13 @@
 // public/loader.js
-// AURA OS Loader v1.1
-// One global script that can enable multiple tools (reviews, SEO, schema, etc.)
-// Reads site configuration from the AURA backend and only activates allowed tools.
+// AURA OS Loader v1.2
+// Universal loader for all AURA tools (Reviews, SEO, Schema, etc.)
 
 (function () {
   const ENGINE_ORIGIN = "https://review-ugc-engine.onrender.com";
 
   // ---------------------------------------------------------------------------
-  // Script + site identification
+  // Find our own script tag + site id
   // ---------------------------------------------------------------------------
-
   function findLoaderScript() {
     const scripts = document.getElementsByTagName("script");
     for (let i = scripts.length - 1; i >= 0; i--) {
@@ -22,34 +20,28 @@
 
   function resolveSiteId() {
     const scriptTag = findLoaderScript();
-
-    // 1) Explicit site ID on the script tag
     if (scriptTag) {
       const explicit = scriptTag.getAttribute("data-aura-site-id");
       if (explicit && explicit.trim()) return explicit.trim();
     }
-
-    // 2) Generic domain-based ID (works for any site)
     return "domain:" + location.hostname;
   }
 
   // ---------------------------------------------------------------------------
-  // Platform / page detection
+  // Platform + page detection
   // ---------------------------------------------------------------------------
-
   function detectPlatform() {
     try {
       if (window.Shopify && window.Shopify.shop) return "shopify";
       if (window.ShopifyAnalytics && window.ShopifyAnalytics.meta) return "shopify";
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
     return "generic";
   }
 
   function isProductPage() {
     const platform = detectPlatform();
 
+    // Shopify product detection
     if (platform === "shopify") {
       try {
         const sa = window.ShopifyAnalytics;
@@ -57,18 +49,28 @@
       } catch (e) {}
     }
 
+    // Meta override
     const metaType = document.querySelector('meta[name="aura:page-type"]');
     if (metaType && metaType.content === "product") return true;
 
+    // Generic URL heuristics
     const path = location.pathname.toLowerCase();
     if (path.includes("/products/") || path.includes("/product/")) return true;
 
     return false;
   }
 
+  function hasExplicitAnchor() {
+    return !!(
+      document.querySelector("[data-aura-ugc-anchor]") ||
+      document.getElementById("aura-review-widget")
+    );
+  }
+
   function resolveProductId() {
     const platform = detectPlatform();
 
+    // Shopify product ID
     if (platform === "shopify") {
       try {
         const sa = window.ShopifyAnalytics;
@@ -78,31 +80,33 @@
       } catch (e) {}
     }
 
+    // Meta override
     const meta = document.querySelector('meta[name="aura:product-id"]');
     if (meta && meta.content) return meta.content;
 
+    // Fallback: URL-based ID
     return "url:" + location.hostname + location.pathname;
   }
 
   // ---------------------------------------------------------------------------
   // DOM helpers
   // ---------------------------------------------------------------------------
-
   function injectReviewContainer(productId) {
-    if (document.getElementById("aura-review-widget")) return;
+    let container = document.getElementById("aura-review-widget");
 
-    const container = document.createElement("div");
-    container.id = "aura-review-widget";
-    container.setAttribute("data-product-id", productId);
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "aura-review-widget";
+      container.setAttribute("data-product-id", productId);
 
-    const anchor =
-      document.querySelector("[data-aura-ugc-anchor]") ||
-      document.querySelector(".ProductInfo") ||
-      document.querySelector(".product__info") ||
-      document.querySelector("#ProductInfo") ||
-      document.body;
+      const anchor =
+        document.querySelector("[data-aura-ugc-anchor]") ||
+        document.body;
 
-    anchor.appendChild(container);
+      anchor.appendChild(container);
+    } else if (!container.getAttribute("data-product-id")) {
+      container.setAttribute("data-product-id", productId);
+    }
   }
 
   function loadScriptOnce(src) {
@@ -120,9 +124,8 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Config fetching
+  // Config fetch
   // ---------------------------------------------------------------------------
-
   async function fetchAuraConfig(siteId) {
     const url =
       ENGINE_ORIGIN +
@@ -137,15 +140,18 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Tool initialisation
+  // Tools
   // ---------------------------------------------------------------------------
-
   async function initReviewsTool(config) {
-    if (!config.tools || !config.tools.reviews || !config.tools.reviews.enabled) {
-      return;
-    }
+    const reviewsCfg =
+      config.tools && config.tools.reviews && config.tools.reviews.enabled;
 
-    if (!isProductPage()) return;
+    if (!reviewsCfg) return;
+
+    // Only run if:
+    //  - we detect a product page, OR
+    //  - the page has an explicit anchor/container
+    if (!isProductPage() && !hasExplicitAnchor()) return;
 
     const productId = resolveProductId();
     injectReviewContainer(productId);
@@ -164,8 +170,10 @@
     try {
       config = await fetchAuraConfig(siteId);
     } catch (e) {
-      console.error("[AURA Loader] Could not load config, falling back to reviews only:", e);
-      // Safe fallback: reviews on, others off
+      console.error(
+        "[AURA Loader] Could not load config, falling back to reviews only:",
+        e
+      );
       config = {
         siteId,
         plan: "fallback",
@@ -175,12 +183,16 @@
       };
     }
 
-    // Future: await initSEOTool(config); await initSchemaTool(config); etc.
     await initReviewsTool(config);
+    // Future:
+    // await initSEOTool(config);
+    // await initSchemaTool(config);
   }
 
   function start() {
-    const metaDisable = document.querySelector('meta[name="aura:disable-loader"]');
+    const metaDisable = document.querySelector(
+      'meta[name="aura:disable-loader"]'
+    );
     if (metaDisable && metaDisable.content === "true") return;
 
     initAllTools();
