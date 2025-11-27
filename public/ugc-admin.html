@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AURA • Review UGC Engine – Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #05080f;
+      --panel: #070c15;
+      --panel-soft: #0b111c;
+      --border: rgba(0, 240, 255, 0.24);
+      --border-soft: rgba(0, 240, 255, 0.12);
+      --ink: #e7f6ff;
+      --muted: #9fb3d8;
+      --accent: #00f0ff;
+      --danger: #ff4f6b;
+      --good: #5fffd3;
+      --radius-lg: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      background: radial-gradient(circle at top, #071426 0, #02040a 48%, #000000 100%);
+      color: var(--ink);
+    }
+
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .pill {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: rgba(7, 12, 21, 0.9);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .panel {
+      border-radius: 22px;
+      border: 1px solid var(--border-soft);
+      background: linear-gradient(145deg, rgba(7,12,21,0.95), rgba(4,8,15,0.98));
+      box-shadow: 0 24px 70px rgba(0,0,0,0.65);
+      padding: 18px 18px 8px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .panel-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .status-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      margin-right: 6px;
+    }
+
+    .status-pill span {
+      vertical-align: middle;
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 520px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .item {
+      border-radius: 14px;
+      border: 1px solid var(--border-soft);
+      background: radial-gradient(circle at top left, rgba(0,240,255,0.16), transparent 45%),
+                  rgba(5, 10, 20, 0.96);
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .item-main {
+      font-size: 13px;
+    }
+
+    .item-meta {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      color: var(--accent);
+      font-size: 10px;
+      margin-right: 4px;
+    }
+
+    .rating {
+      font-size: 12px;
+      color: var(--good);
+      margin-top: 4px;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+    }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 7px 13px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-approve {
+      background: linear-gradient(135deg, #00f0ff, #00b3ff);
+      color: #02040a;
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
+    }
+
+    .btn-refresh {
+      background: transparent;
+      color: var(--muted);
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      padding: 5px 10px;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .empty {
+      font-size: 13px;
+      color: var(--muted);
+      padding: 20px 10px 12px;
+      text-align: center;
+    }
+
+    .badge-score {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(95, 255, 211, 0.4);
+      color: var(--good);
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    .small-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(7, 12, 21, 0.96);
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--ink);
+      font-size: 12px;
+      padding: 8px 14px;
+      display: none;
+    }
+
+    @media (max-width: 780px) {
+      body {
+        padding: 16px;
+      }
+      .item {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .actions {
+        flex-direction: row;
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="header">
+      <div>
+        <div class="title">AURA • Review UGC Engine</div>
+        <div class="subtitle">Moderate user-generated content before it hits your product pages.</div>
+      </div>
+      <div class="pill">Service: <strong style="margin-left:4px;">review-ugc-engine</strong></div>
+    </header>
+
+    <main class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Pending UGC</div>
+          <div class="panel-sub" id="pending-count">Loading queue…</div>
+        </div>
+        <div>
+          <button class="btn-refresh" onclick="loadPending(true)">
+            ⟳ Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="list" id="ugc-list"></div>
+      <div class="empty" id="ugc-empty" style="display:none;">
+        No items waiting. When customers submit reviews or photos, they will appear here.
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API_BASE = '/api/ugc'; // works locally and on Render
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 2200);
+    }
+
+    async function loadPending(showToastOnRefresh = false) {
+      const list = document.getElementById('ugc-list');
+      const empty = document.getElementById('ugc-empty');
+      const countLabel = document.getElementById('pending-count');
+
+      list.innerHTML = '';
+      empty.style.display = 'none';
+      countLabel.textContent = 'Loading queue…';
+
+      try {
+        const res = await fetch(`${API_BASE}/moderation/pending`);
+        const items = await res.json();
+
+        if (!Array.isArray(items) || items.length === 0) {
+          empty.style.display = 'block';
+          countLabel.textContent = '0 pending items';
+          if (showToastOnRefresh) showToast('Queue refreshed (no items).');
+          return;
+        }
+
+        countLabel.textContent = `${items.length} pending item${items.length > 1 ? 's' : ''}`;
+
+        items.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'item';
+
+          const createdAt = item.created_at
+            ? new Date(item.created_at).toLocaleString()
+            : 'Unknown time';
+
+          card.innerHTML = `
+            <div class="item-main">
+              <div class="small-label">Review text</div>
+              <div>${item.text ? item.text : '<span style="color: var(--muted);">No review text</span>'}</div>
+              ${item.rating ? `<div class="rating">⭐ ${item.rating} / 5</div>` : ''}
+              ${item.ai_score ? `<div class="badge-score">AI Score: ${(item.ai_score * 100).toFixed(0)}%</div>` : ''}
+            </div>
+            <div class="item-meta">
+              <div class="small-label">Meta</div>
+              <div>
+                <span class="tag">Product: ${item.product_id || '-'}</span>
+                <span class="tag">Customer: ${item.customer_id || '-'}</span>
+              </div>
+              <div style="margin-top:6px;">
+                Type: <strong>${item.type || '-'}</strong><br/>
+                Status: <strong>${item.status}</strong><br/>
+                Created: ${createdAt}<br/>
+                Media: ${item.media_url ? `<a href="${item.media_url}" target="_blank" style="color: var(--accent);">Open media</a>` : 'None'}
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn-approve" onclick="approveItem(${item.id})">Approve</button>
+              <div class="status-pill">
+                <span class="status-dot"></span>
+                <span>awaiting moderation</span>
+              </div>
+            </div>
+          `;
+
+          list.appendChild(card);
+        });
+
+        if (showToastOnRefresh) showToast('Queue refreshed.');
+      } catch (err) {
+        console.error(err);
+        countLabel.textContent = 'Error loading queue';
+        empty.style.display = 'block';
+        empty.textContent = 'Error talking to API. Check console / network.';
+        showToast('Failed to load queue.');
+      }
+    }
+
+    async function approveItem(id) {
+      try {
+        const res = await fetch(`${API_BASE}/moderation/${id}/approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            moderatorId: 'darren',
+            notes: 'Approved via admin dashboard'
+          })
+        });
+
+        if (!res.ok) {
+          showToast('Failed to approve item.');
+          return;
+        }
+
+        showToast('Item approved.');
+        loadPending();
+      } catch (err) {
+        console.error(err);
+        showToast('Error approving item.');
+      }
+    }
+
+    // Initial load
+    loadPending();
+  </script>
+</body>
+</html>
