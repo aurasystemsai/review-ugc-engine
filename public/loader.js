@@ -1,132 +1,70 @@
-// public/loader.js
-// AURA OS Universal Loader – minimal, reviews-only
-
 (function () {
-  'use strict';
+  if (window.__AURA_LOADER_INITIALISED__) return;
+  window.__AURA_LOADER_INITIALISED__ = true;
 
-  // -------------------------------
-  // Helper: safely get current <script> tag
-  // -------------------------------
-  function getCurrentScript() {
-    if (document.currentScript) return document.currentScript;
-    var scripts = document.getElementsByTagName('script');
-    return scripts[scripts.length - 1];
-  }
+  const currentScript =
+    document.currentScript ||
+    document.querySelector('script[data-aura-site-id]') ||
+    document.querySelector('script[src*="loader.js"]');
 
-  var scriptEl = getCurrentScript();
-  if (!scriptEl) {
-    console.warn('[AURA Loader] No script element found.');
+  if (!currentScript) {
+    console.warn('[AURA] loader.js: no script tag found');
     return;
   }
 
-  // -------------------------------
-  // Config from script tag
-  // -------------------------------
-  var rawSiteId = scriptEl.getAttribute('data-aura-site-id');
-  var hostname = window.location.hostname.replace(/^www\./, '');
-  var siteId = rawSiteId && rawSiteId.trim()
-    ? rawSiteId.trim()
-    : 'domain:' + hostname;
+  const siteIdAttr = currentScript.getAttribute('data-aura-site-id');
+  const siteId = siteIdAttr || `domain:${window.location.hostname}`;
 
-  // Derive API base from script src, but allow override
-  var scriptSrc = scriptEl.getAttribute('src') || '';
-  var apiBase;
-  try {
-    apiBase = new URL(scriptSrc, window.location.origin).origin;
-  } catch (e) {
-    apiBase = window.location.origin;
-  }
-  var overrideApi = scriptEl.getAttribute('data-aura-api');
-  if (overrideApi && overrideApi.trim()) {
-    apiBase = overrideApi.trim().replace(/\/+$/, '');
-  }
+  const explicitService = currentScript.getAttribute('data-aura-service');
+  const serviceBase =
+    explicitService ||
+    (window.location.hostname === 'localhost'
+      ? 'http://localhost:4001'
+      : 'https://review-ugc-engine.onrender.com');
 
-  // -------------------------------
-  // Small helpers
-  // -------------------------------
-  function fetchJson(url) {
-    return fetch(url, {
-      credentials: 'omit',
-      headers: { 'Accept': 'application/json' }
-    }).then(function (res) {
-      if (!res.ok) {
-        throw new Error('HTTP ' + res.status + ' for ' + url);
-      }
-      return res.json();
-    });
-  }
+  const configUrl =
+    serviceBase + '/api/aura-config?site_id=' + encodeURIComponent(siteId);
 
-  function onDomReady(fn) {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fn);
-    } else {
-      fn();
-    }
-  }
-
-  function loadWidgetScript(apiBase, config, context) {
-    // Avoid double-loading
-    if (window.AURA_WIDGET && window.AURA_WIDGET.loaded) {
-      if (typeof window.AURA_WIDGET.mountReviews === 'function') {
-        window.AURA_WIDGET.mountReviews({
-          apiBase: apiBase,
-          config: config,
-          siteId: context.siteId
-        });
-      }
-      return;
-    }
-
-    var s = document.createElement('script');
-    s.src = apiBase + '/widget.js';
+  function injectScript(src, extraAttrs) {
+    const s = document.createElement('script');
+    s.src = src;
     s.async = true;
-    s.defer = true;
-    s.onload = function () {
-      if (window.AURA_WIDGET && typeof window.AURA_WIDGET.mountReviews === 'function') {
-        window.AURA_WIDGET.loaded = true;
-        window.AURA_WIDGET.mountReviews({
-          apiBase: apiBase,
-          config: config,
-          siteId: context.siteId
-        });
-      } else {
-        console.warn('[AURA Loader] widget.js loaded but AURA_WIDGET.mountReviews is missing');
-      }
-    };
-    s.onerror = function (err) {
-      console.error('[AURA Loader] Failed to load widget.js', err);
-    };
+
+    if (extraAttrs) {
+      Object.keys(extraAttrs).forEach((key) => {
+        s.setAttribute(key, extraAttrs[key]);
+      });
+    }
+
     document.head.appendChild(s);
   }
 
-  // -------------------------------
-  // Main: fetch config, then load widget
-  // -------------------------------
-  var configUrl = apiBase + '/api/aura-config?site_id=' + encodeURIComponent(siteId);
-
-  fetchJson(configUrl)
-    .then(function (config) {
-      try {
-        var reviewsEnabled =
-          config &&
-          config.tools &&
-          config.tools.reviews &&
-          config.tools.reviews.enabled;
-
-        if (!reviewsEnabled) {
-          console.info('[AURA Loader] Reviews tool disabled for siteId ' + siteId);
-          return;
-        }
-
-        onDomReady(function () {
-          loadWidgetScript(apiBase, config, { siteId: siteId });
-        });
-      } catch (e) {
-        console.error('[AURA Loader] Error handling config', e);
-      }
+  fetch(configUrl)
+    .then((res) => {
+      if (!res.ok) throw new Error('Config HTTP ' + res.status);
+      return res.json();
     })
-    .catch(function (err) {
-      console.error('[AURA Loader] Failed to fetch /api/aura-config', err);
+    .then((config) => {
+      if (!config || !config.tools) {
+        console.warn('[AURA] Invalid config payload', config);
+        return;
+      }
+
+      const tools = config.tools;
+
+      // Reviews widget
+      if (tools.reviews && tools.reviews.enabled) {
+        injectScript(serviceBase + '/widget.js', {
+          'data-aura-site-id': siteId,
+          'data-aura-service': serviceBase
+        });
+      }
+
+      // In future: SEO tool, Schema tool, etc.
+      // if (tools.seo && tools.seo.enabled) { ... }
+      // if (tools.schema && tools.schema.enabled) { ... }
+    })
+    .catch((err) => {
+      console.error('[AURA] Failed to load config', err);
     });
 })();
-

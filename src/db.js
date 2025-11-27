@@ -1,14 +1,13 @@
-const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 
-// Database file
-const DB_PATH = path.join(__dirname, '..', 'ugc.db');
-const db = new sqlite3.Database(DB_PATH);
+const dbPath = path.join(__dirname, '..', 'ugc.db');
+const db = new sqlite3.Database(dbPath);
 
 // Create table if it doesn't exist
 db.serialize(() => {
   db.run(`
-    CREATE TABLE IF NOT EXISTS ugc_items (
+    CREATE TABLE IF NOT EXISTS ugc_reviews (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       customer_id TEXT,
       product_id TEXT,

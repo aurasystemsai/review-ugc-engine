@@ -1,513 +1,280 @@
-// public/widget.js
-// AURA • Reviews Widget – floating launcher + panel
-
 (function () {
-  'use strict';
+  const script =
+    document.currentScript ||
+    document.querySelector('script[data-aura-site-id]') ||
+    document.querySelector('script[src*="widget.js"]');
 
-  if (!window.AURA_WIDGET) {
-    window.AURA_WIDGET = {};
+  if (!script) {
+    console.warn('[AURA] widget.js: no script tag found');
+    return;
   }
 
-  /**
-   * Inject minimal styles once
-   */
-  function ensureStyles() {
-    if (document.getElementById('aura-reviews-styles')) return;
+  const siteId = script.getAttribute('data-aura-site-id') || '';
+  const serviceBase =
+    script.getAttribute('data-aura-service') ||
+    (window.location.hostname === 'localhost'
+      ? 'http://localhost:4001'
+      : 'https://review-ugc-engine.onrender.com');
 
-    var css = `
-      .aura-rw-root {
+  const productId =
+    script.getAttribute('data-aura-product-id') ||
+    window.location.pathname ||
+    'page';
+
+  // -----------------------------
+  // Styles
+  // -----------------------------
+  function injectStyles() {
+    if (document.getElementById('aura-review-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'aura-review-styles';
+    style.textContent = `
+      .aura-review-button {
         position: fixed;
-        z-index: 999999;
-        bottom: 20px;
-        right: 20px;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-      }
-
-      .aura-rw-launcher {
-        background: radial-gradient(circle at 0 0, #00f0ff 0, #00111a 45%, #00040a 100%);
+        right: 24px;
+        bottom: 24px;
+        z-index: 99999;
+        background: radial-gradient(circle at top left, #00f0ff, #0073ff);
+        color: #ffffff;
+        border: none;
         border-radius: 999px;
-        padding: 10px 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        border: 1px solid rgba(0, 240, 255, 0.4);
-        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
+        padding: 10px 18px;
+        font-size: 14px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        box-shadow: 0 18px 35px rgba(0, 0, 0, 0.55);
         cursor: pointer;
-        color: #e7f6ff;
-        font-size: 13px;
-        font-weight: 500;
-        backdrop-filter: blur(18px);
       }
 
-      .aura-rw-launcher-icon {
-        width: 22px;
-        height: 22px;
-        border-radius: 999px;
-        border: 1px solid rgba(0, 240, 255, 0.7);
+      .aura-review-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(3, 7, 18, 0.78);
+        z-index: 99998;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 13px;
-        font-weight: 700;
-        background: radial-gradient(circle at 30% 0, #00f0ff 0, #041726 65%, #00040a 100%);
-        color: #e7f6ff;
       }
 
-      .aura-rw-launcher-label {
-        white-space: nowrap;
-      }
-
-      .aura-rw-panel {
-        position: fixed;
-        z-index: 999998;
-        bottom: 72px;
-        right: 20px;
-        width: min(420px, 100vw - 32px);
-        max-height: min(520px, 80vh);
-        background: radial-gradient(circle at top, #061122 0, #020611 55%, #000208 100%);
+      .aura-review-modal {
+        width: 100%;
+        max-width: 420px;
+        background: rgba(10, 15, 30, 0.96);
         border-radius: 18px;
-        border: 1px solid rgba(0, 240, 255, 0.32);
-        box-shadow: 0 26px 60px rgba(0, 0, 0, 0.85);
+        border: 1px solid rgba(0, 240, 255, 0.24);
+        padding: 20px 22px;
         color: #e7f6ff;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        opacity: 0;
-        transform: translateY(12px);
-        pointer-events: none;
-        transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        box-shadow: 0 26px 60px rgba(0, 0, 0, 0.8);
       }
 
-      .aura-rw-panel--open {
-        opacity: 1;
-        transform: translateY(0);
-        pointer-events: auto;
+      .aura-review-modal h3 {
+        margin: 0 0 4px 0;
+        font-size: 18px;
       }
 
-      .aura-rw-header {
-        padding: 14px 16px 10px;
-        border-bottom: 1px solid rgba(0, 240, 255, 0.18);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .aura-rw-title-block {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-
-      .aura-rw-title {
-        font-size: 14px;
-        font-weight: 600;
-      }
-
-      .aura-rw-subtitle {
-        font-size: 11px;
+      .aura-review-modal p {
+        margin: 0 0 16px 0;
+        font-size: 13px;
         color: #9fb3d8;
       }
 
-      .aura-rw-close {
-        border-radius: 999px;
-        width: 26px;
-        height: 26px;
-        border: 1px solid rgba(159, 179, 216, 0.5);
-        background: transparent;
-        color: #9fb3d8;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        font-size: 14px;
+      .aura-review-field {
+        margin-bottom: 10px;
       }
 
-      .aura-rw-body {
-        padding: 10px 16px 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        overflow: auto;
-      }
-
-      .aura-rw-form {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding: 10px 10px 10px;
-        border-radius: 14px;
-        border: 1px solid rgba(0, 240, 255, 0.2);
-        background: radial-gradient(circle at top left, rgba(0, 240, 255, 0.16) 0, rgba(0, 240, 255, 0.02) 46%, rgba(0, 0, 0, 0.8) 100%);
-      }
-
-      .aura-rw-label {
-        font-size: 11px;
-        color: #9fb3d8;
-        margin-bottom: 2px;
-      }
-
-      .aura-rw-stars-select {
-        display: inline-flex;
-        gap: 2px;
-        font-size: 15px;
-        cursor: pointer;
-      }
-
-      .aura-rw-star {
-        opacity: 0.5;
-      }
-
-      .aura-rw-star--active {
-        opacity: 1;
-        color: #ffd76b;
-      }
-
-      .aura-rw-textarea {
-        resize: vertical;
-        min-height: 60px;
-        max-height: 120px;
-        border-radius: 10px;
-        border: 1px solid rgba(159, 179, 216, 0.6);
-        background: rgba(1, 4, 12, 0.9);
-        padding: 6px 8px;
-        color: #e7f6ff;
+      .aura-review-field label {
+        display: block;
         font-size: 12px;
+        margin-bottom: 4px;
       }
 
-      .aura-rw-textarea:focus {
-        outline: none;
-        border-color: rgba(0, 240, 255, 0.9);
-        box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.6);
+      .aura-review-field select,
+      .aura-review-field textarea {
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        background: rgba(15, 23, 42, 0.95);
+        color: #e5e7eb;
+        font-size: 13px;
+        padding: 7px 8px;
+        resize: vertical;
+        min-height: 72px;
       }
 
-      .aura-rw-submit {
-        margin-top: 4px;
-        align-self: flex-end;
-        padding: 6px 10px;
+      .aura-review-actions {
+        margin-top: 12px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .aura-review-btn-secondary {
+        background: transparent;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.8);
+        color: #e5e7eb;
+        padding: 7px 14px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .aura-review-btn-primary {
+        background: linear-gradient(135deg, #00f0ff, #00c4ff);
         border-radius: 999px;
         border: none;
-        background: linear-gradient(120deg, #00f0ff, #00c8ff);
-        color: #04101a;
-        font-size: 12px;
-        font-weight: 600;
+        color: #020617;
+        padding: 7px 16px;
+        font-size: 13px;
         cursor: pointer;
       }
 
-      .aura-rw-status {
-        font-size: 11px;
-        color: #9fb3d8;
-        min-height: 14px;
-      }
-
-      .aura-rw-status--error {
-        color: #ff6b80;
-      }
-
-      .aura-rw-status--success {
-        color: #5fffd3;
-      }
-
-      .aura-rw-reviews-list {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding-top: 4px;
-      }
-
-      .aura-rw-review-card {
-        border-radius: 12px;
-        border: 1px solid rgba(159, 179, 216, 0.35);
-        padding: 8px 10px;
-        background: radial-gradient(circle at top left, rgba(0, 240, 255, 0.08) 0, rgba(1, 5, 16, 0.95) 60%);
-      }
-
-      .aura-rw-review-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 4px;
-        gap: 6px;
-      }
-
-      .aura-rw-review-name {
+      .aura-review-status {
+        margin-top: 8px;
         font-size: 12px;
-        font-weight: 500;
-      }
-
-      .aura-rw-review-stars {
-        font-size: 11px;
-        color: #ffd76b;
-      }
-
-      .aura-rw-review-text {
-        font-size: 11px;
-        color: #c0d4ff;
-      }
-
-      .aura-rw-empty {
-        font-size: 11px;
-        color: #7c8fb4;
-      }
-
-      @media (max-width: 600px) {
-        .aura-rw-panel {
-          right: 16px;
-          left: 16px;
-          width: auto;
-        }
-
-        .aura-rw-root {
-          right: 16px;
-          bottom: 16px;
-        }
+        color: #9fb3d8;
       }
     `;
-
-    var styleEl = document.createElement('style');
-    styleEl.id = 'aura-reviews-styles';
-    styleEl.textContent = css;
-    document.head.appendChild(styleEl);
+    document.head.appendChild(style);
   }
 
-  /**
-   * Utility: fetch JSON with error handling
-   */
-  function fetchJson(url, opts) {
-    return fetch(url, opts || {}).then(function (res) {
-      if (!res.ok) {
-        var err = new Error('HTTP ' + res.status + ' for ' + url);
-        err.status = res.status;
-        throw err;
-      }
-      return res.json();
-    });
+  // -----------------------------
+  // UI elements
+  // -----------------------------
+  let overlayEl = null;
+
+  function closeOverlay() {
+    if (overlayEl && overlayEl.parentNode) {
+      overlayEl.parentNode.removeChild(overlayEl);
+    }
+    overlayEl = null;
   }
 
-  /**
-   * Build productId from URL – works on any platform
-   */
-  function getProductId() {
-    var path = window.location.pathname || '/';
-    var origin = window.location.origin || '';
-    return 'url:' + origin + path;
+  function openOverlay() {
+    if (overlayEl) return;
+
+    overlayEl = document.createElement('div');
+    overlayEl.className = 'aura-review-overlay';
+
+    overlayEl.innerHTML = `
+      <div class="aura-review-modal">
+        <h3>Share your experience</h3>
+        <p>Help us improve by leaving a quick review.</p>
+
+        <div class="aura-review-field">
+          <label for="aura-review-rating">Rating</label>
+          <select id="aura-review-rating">
+            <option value="5">★★★★★ – 5</option>
+            <option value="4">★★★★☆ – 4</option>
+            <option value="3">★★★☆☆ – 3</option>
+            <option value="2">★★☆☆☆ – 2</option>
+            <option value="1">★☆☆☆☆ – 1</option>
+          </select>
+        </div>
+
+        <div class="aura-review-field">
+          <label for="aura-review-text">Review</label>
+          <textarea id="aura-review-text" placeholder="What do you think?"></textarea>
+        </div>
+
+        <div class="aura-review-actions">
+          <button type="button" class="aura-review-btn-secondary" id="aura-review-cancel">Cancel</button>
+          <button type="button" class="aura-review-btn-primary" id="aura-review-submit">Submit</button>
+        </div>
+
+        <div class="aura-review-status" id="aura-review-status"></div>
+      </div>
+    `;
+
+    document.body.appendChild(overlayEl);
+
+    document
+      .getElementById('aura-review-cancel')
+      .addEventListener('click', closeOverlay);
+
+    document
+      .getElementById('aura-review-submit')
+      .addEventListener('click', submitReview);
   }
 
-  /**
-   * Mount reviews widget
-   * opts: { apiBase, config, siteId }
-   */
-  window.AURA_WIDGET.mountReviews = function mountReviews(opts) {
-    ensureStyles();
+  function createFloatingButton() {
+    if (document.getElementById('aura-review-button')) return;
 
-    var apiBase = (opts && opts.apiBase) || '';
-    var siteId = (opts && opts.siteId) || ('domain:' + window.location.hostname.replace(/^www\./, ''));
-    var productId = getProductId();
+    const btn = document.createElement('button');
+    btn.id = 'aura-review-button';
+    btn.className = 'aura-review-button';
+    btn.textContent = 'Reviews';
 
-    // Root container
-    var existingRoot = document.getElementById('aura-rw-root');
-    if (existingRoot) {
-      // Already mounted
+    btn.addEventListener('click', openOverlay);
+
+    document.body.appendChild(btn);
+  }
+
+  // -----------------------------
+  // Submit handler
+  // -----------------------------
+  function submitReview() {
+    const ratingEl = document.getElementById('aura-review-rating');
+    const textEl = document.getElementById('aura-review-text');
+    const statusEl = document.getElementById('aura-review-status');
+
+    if (!ratingEl || !textEl) return;
+
+    const rating = parseInt(ratingEl.value, 10);
+    const text = (textEl.value || '').trim();
+
+    if (!text) {
+      statusEl.textContent = 'Please write a few words before submitting.';
       return;
     }
 
-    var root = document.createElement('div');
-    root.id = 'aura-rw-root';
-    root.className = 'aura-rw-root';
+    statusEl.textContent = 'Submitting...';
 
-    root.innerHTML = `
-      <div class="aura-rw-launcher" aria-label="Open reviews" role="button">
-        <div class="aura-rw-launcher-icon">A</div>
-        <div class="aura-rw-launcher-label">Reviews</div>
-      </div>
-      <div class="aura-rw-panel" aria-hidden="true">
-        <div class="aura-rw-header">
-          <div class="aura-rw-title-block">
-            <div class="aura-rw-title">Customer reviews</div>
-            <div class="aura-rw-subtitle">For this page</div>
-          </div>
-          <button type="button" class="aura-rw-close" aria-label="Close reviews">&times;</button>
-        </div>
-        <div class="aura-rw-body">
-          <form class="aura-rw-form">
-            <div>
-              <div class="aura-rw-label">Your rating</div>
-              <div class="aura-rw-stars-select" data-rating="5" aria-label="Choose rating">
-                <span data-value="1" class="aura-rw-star aura-rw-star--active">★</span>
-                <span data-value="2" class="aura-rw-star aura-rw-star--active">★</span>
-                <span data-value="3" class="aura-rw-star aura-rw-star--active">★</span>
-                <span data-value="4" class="aura-rw-star aura-rw-star--active">★</span>
-                <span data-value="5" class="aura-rw-star aura-rw-star--active">★</span>
-              </div>
-            </div>
-            <div>
-              <div class="aura-rw-label">Your review</div>
-              <textarea class="aura-rw-textarea" name="text" required placeholder="Share your experience..."></textarea>
-            </div>
-            <button type="submit" class="aura-rw-submit">Submit review</button>
-            <div class="aura-rw-status"></div>
-          </form>
+    const payload = {
+      customerId: null,
+      productId,
+      orderId: null,
+      channel: 'web',
+      type: 'review',
+      rating,
+      text,
+      mediaUrl: null,
+      siteId
+    };
 
-          <div class="aura-rw-reviews-list" data-role="reviews-list">
-            <div class="aura-rw-empty">Loading reviews…</div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(root);
-
-    var launcher = root.querySelector('.aura-rw-launcher');
-    var panel = root.querySelector('.aura-rw-panel');
-    var closeBtn = root.querySelector('.aura-rw-close');
-    var form = root.querySelector('.aura-rw-form');
-    var textarea = root.querySelector('.aura-rw-textarea');
-    var statusEl = root.querySelector('.aura-rw-status');
-    var starsContainer = root.querySelector('.aura-rw-stars-select');
-    var reviewsList = root.querySelector('[data-role="reviews-list"]');
-
-    // Toggle helpers
-    function openPanel() {
-      panel.classList.add('aura-rw-panel--open');
-      panel.setAttribute('aria-hidden', 'false');
-    }
-    function closePanel() {
-      panel.classList.remove('aura-rw-panel--open');
-      panel.setAttribute('aria-hidden', 'true');
-    }
-
-    launcher.addEventListener('click', function () {
-      if (panel.classList.contains('aura-rw-panel--open')) {
-        closePanel();
-      } else {
-        openPanel();
-      }
-    });
-
-    closeBtn.addEventListener('click', function () {
-      closePanel();
-    });
-
-    // Rating stars interaction
-    function setRating(val) {
-      var rating = Math.min(5, Math.max(1, val || 5));
-      starsContainer.setAttribute('data-rating', String(rating));
-      var stars = starsContainer.querySelectorAll('.aura-rw-star');
-      stars.forEach(function (star) {
-        var v = Number(star.getAttribute('data-value'));
-        if (v <= rating) {
-          star.classList.add('aura-rw-star--active');
-        } else {
-          star.classList.remove('aura-rw-star--active');
-        }
-      });
-    }
-
-    starsContainer.addEventListener('click', function (evt) {
-      var target = evt.target;
-      if (!target || !target.getAttribute) return;
-      var v = Number(target.getAttribute('data-value'));
-      if (!v) return;
-      setRating(v);
-    });
-
-    setRating(5); // default
-
-    // Load approved reviews for this page
-    function renderReviews(items) {
-      reviewsList.innerHTML = '';
-      if (!items || !items.length) {
-        reviewsList.innerHTML = '<div class="aura-rw-empty">No reviews yet. Be the first to leave one.</div>';
-        return;
-      }
-
-      items.forEach(function (item) {
-        var card = document.createElement('div');
-        card.className = 'aura-rw-review-card';
-
-        var name = item.customer_id || 'Verified buyer';
-        var rating = Number(item.rating || 5);
-        var stars = '★★★★★☆☆☆☆☆'.slice(0, rating);
-
-        card.innerHTML = `
-          <div class="aura-rw-review-header">
-            <div class="aura-rw-review-name">${escapeHtml(name)}</div>
-            <div class="aura-rw-review-stars">${stars}</div>
-          </div>
-          <div class="aura-rw-review-text">${escapeHtml(item.text || '')}</div>
-        `;
-        reviewsList.appendChild(card);
-      });
-    }
-
-    function escapeHtml(str) {
-      return String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    function loadReviews() {
-      var url = apiBase + '/api/ugc/product/' + encodeURIComponent(productId);
-      fetchJson(url)
-        .then(function (items) {
-          renderReviews(items || []);
-        })
-        .catch(function () {
-          reviewsList.innerHTML = '<div class="aura-rw-empty">Unable to load reviews right now.</div>';
-        });
-    }
-
-    loadReviews();
-
-    // Submit handler
-    form.addEventListener('submit', function (evt) {
-      evt.preventDefault();
-      statusEl.textContent = '';
-      statusEl.classList.remove('aura-rw-status--error', 'aura-rw-status--success');
-
-      var rating = Number(starsContainer.getAttribute('data-rating') || 5);
-      var text = (textarea.value || '').trim();
-      if (!text) {
-        statusEl.textContent = 'Please write a short review.';
-        statusEl.classList.add('aura-rw-status--error');
-        return;
-      }
-
-      var payload = {
-        customer_id: null,
-        product_id: productId,
-        rating: rating,
-        text: text,
-        media_url: null,
-        channel: 'web-widget',
-        site_id: siteId
-      };
-
-      var url = apiBase + '/api/ugc/submit';
-
-      fetchJson(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
+    fetch(serviceBase + '/api/ugc/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
       })
-        .then(function () {
-          statusEl.textContent = 'Thanks for your review! It will appear once approved.';
-          statusEl.classList.add('aura-rw-status--success');
-          textarea.value = '';
-          setRating(5);
-          // Reload approved reviews a bit later
-          setTimeout(loadReviews, 1500);
-        })
-        .catch(function (err) {
-          console.error('[AURA Reviews] Submit failed', err);
-          statusEl.textContent = 'Something went wrong. Please try again in a moment.';
-          statusEl.classList.add('aura-rw-status--error');
-        });
-    });
-  };
+      .then(() => {
+        statusEl.textContent = 'Thanks! Your review is pending moderation.';
+        setTimeout(closeOverlay, 1200);
+      })
+      .catch((err) => {
+        console.error('[AURA] Submit error', err);
+        statusEl.textContent =
+          'Sorry, something went wrong. Please try again in a moment.';
+      });
+  }
+
+  // -----------------------------
+  // Boot
+  // -----------------------------
+  function boot() {
+    injectStyles();
+    createFloatingButton();
+  }
+
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    boot();
+  } else {
+    document.addEventListener('DOMContentLoaded', boot);
+  }
 })();
