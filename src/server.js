@@ -46,20 +46,24 @@ app.use(morgan('dev'));
 const publicPath = path.join(__dirname, '..', 'public');
 app.use(express.static(publicPath));
 
-// Health check
+// Health check (public)
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'review-ugc-engine', time: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    service: 'review-ugc-engine',
+    time: new Date().toISOString()
+  });
 });
 
-// Admin Dashboard (Protected)
+// Admin dashboard (PROTECTED)
 app.get('/admin/ugc', requireAdmin, (req, res) => {
   res.sendFile(path.join(publicPath, 'ugc-admin.html'));
 });
 
-// Protect moderation endpoints
+// PROTECT moderation endpoints
 app.use('/api/ugc/moderation', requireAdmin);
 
-// Public routes (submit + get approved)
+// Public API: submit + fetch approved
 app.use('/api/ugc', ugcRoutes);
 
 // Start server
