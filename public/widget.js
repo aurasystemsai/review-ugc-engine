@@ -1,280 +1,314 @@
+// public/widget.js
+// AURA • Universal front-end widget
+// This runs on ANY site (Shopify, Framer, Wix, etc.)
+// It creates a floating "Reviews" button bottom-right + a small panel.
+
 (function () {
-  const script =
-    document.currentScript ||
-    document.querySelector('script[data-aura-site-id]') ||
-    document.querySelector('script[src*="widget.js"]');
+  // Avoid double-loading
+  if (window.AURA_WIDGET_LOADED) return;
+  window.AURA_WIDGET_LOADED = true;
 
-  if (!script) {
-    console.warn('[AURA] widget.js: no script tag found');
-    return;
-  }
-
-  const siteId = script.getAttribute('data-aura-site-id') || '';
-  const serviceBase =
-    script.getAttribute('data-aura-service') ||
-    (window.location.hostname === 'localhost'
-      ? 'http://localhost:4001'
-      : 'https://review-ugc-engine.onrender.com');
-
-  const productId =
-    script.getAttribute('data-aura-product-id') ||
-    window.location.pathname ||
-    'page';
-
-  // -----------------------------
-  // Styles
-  // -----------------------------
+  // ---------------------------------------------------------------------------
+  // 1) Inject widget styles (scoped + high z-index so pages can't easily break it)
+  // ---------------------------------------------------------------------------
   function injectStyles() {
-    if (document.getElementById('aura-review-styles')) return;
+    if (document.getElementById('aura-widget-styles')) return;
 
     const style = document.createElement('style');
-    style.id = 'aura-review-styles';
+    style.id = 'aura-widget-styles';
     style.textContent = `
-      .aura-review-button {
-        position: fixed;
-        right: 24px;
-        bottom: 24px;
-        z-index: 99999;
-        background: radial-gradient(circle at top left, #00f0ff, #0073ff);
-        color: #ffffff;
-        border: none;
-        border-radius: 999px;
-        padding: 10px 18px;
-        font-size: 14px;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-        box-shadow: 0 18px 35px rgba(0, 0, 0, 0.55);
-        cursor: pointer;
+      .aura-widget-reset {
+        all: initial;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
       }
 
-      .aura-review-overlay {
+      .aura-widget-root {
         position: fixed;
         inset: 0;
-        background: rgba(3, 7, 18, 0.78);
-        z-index: 99998;
-        display: flex;
+        pointer-events: none;
+        z-index: 2147483000; /* above most stuff */
+      }
+
+      .aura-widget-button {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        pointer-events: auto;
+      }
+
+      .aura-widget-button-inner {
+        all: unset;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #00f0ff, #00c8ff);
+        color: #05080f;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+        transition:
+          transform 160ms ease-out,
+          box-shadow 160ms ease-out,
+          opacity 160ms ease-out;
+        opacity: 0.96;
       }
 
-      .aura-review-modal {
-        width: 100%;
-        max-width: 420px;
-        background: rgba(10, 15, 30, 0.96);
-        border-radius: 18px;
-        border: 1px solid rgba(0, 240, 255, 0.24);
-        padding: 20px 22px;
-        color: #e7f6ff;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-        box-shadow: 0 26px 60px rgba(0, 0, 0, 0.8);
+      .aura-widget-button-inner:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 22px 60px rgba(0, 0, 0, 0.65);
+        opacity: 1;
       }
 
-      .aura-review-modal h3 {
-        margin: 0 0 4px 0;
-        font-size: 18px;
+      .aura-widget-button-inner:active {
+        transform: translateY(0);
+        box-shadow: 0 8px 26px rgba(0, 0, 0, 0.75);
       }
 
-      .aura-review-modal p {
-        margin: 0 0 16px 0;
-        font-size: 13px;
-        color: #9fb3d8;
+      .aura-widget-pill-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #05080f;
       }
 
-      .aura-review-field {
-        margin-bottom: 10px;
-      }
-
-      .aura-review-field label {
-        display: block;
-        font-size: 12px;
-        margin-bottom: 4px;
-      }
-
-      .aura-review-field select,
-      .aura-review-field textarea {
-        width: 100%;
-        border-radius: 10px;
-        border: 1px solid rgba(148, 163, 184, 0.6);
-        background: rgba(15, 23, 42, 0.95);
-        color: #e5e7eb;
-        font-size: 13px;
-        padding: 7px 8px;
-        resize: vertical;
-        min-height: 72px;
-      }
-
-      .aura-review-actions {
-        margin-top: 12px;
+      /* Panel */
+      .aura-widget-panel {
+        position: fixed;
+        bottom: 80px;
+        right: 24px;
+        width: min(420px, calc(100vw - 32px));
+        max-height: min(520px, calc(100vh - 120px));
+        pointer-events: auto;
+        background: rgba(5, 8, 15, 0.98);
+        border-radius: 22px;
+        border: 1px solid rgba(0, 240, 255, 0.22);
+        box-shadow: 0 32px 90px rgba(0, 0, 0, 0.85);
         display: flex;
-        justify-content: flex-end;
-        gap: 10px;
+        flex-direction: column;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(6px);
+        visibility: hidden;
+        transition:
+          opacity 140ms ease-out,
+          transform 140ms ease-out,
+          visibility 140ms ease-out;
       }
 
-      .aura-review-btn-secondary {
-        background: transparent;
-        border-radius: 999px;
-        border: 1px solid rgba(148, 163, 184, 0.8);
-        color: #e5e7eb;
-        padding: 7px 14px;
-        font-size: 13px;
-        cursor: pointer;
+      .aura-widget-panel[data-open="true"] {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
       }
 
-      .aura-review-btn-primary {
-        background: linear-gradient(135deg, #00f0ff, #00c4ff);
-        border-radius: 999px;
-        border: none;
-        color: #020617;
-        padding: 7px 16px;
-        font-size: 13px;
-        cursor: pointer;
+      .aura-widget-panel-header {
+        padding: 14px 18px 10px;
+        border-bottom: 1px solid rgba(0, 240, 255, 0.16);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
       }
 
-      .aura-review-status {
-        margin-top: 8px;
-        font-size: 12px;
+      .aura-widget-panel-title {
+        color: #e7f6ff;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .aura-widget-panel-sub {
         color: #9fb3d8;
+        font-size: 12px;
+        margin-top: 2px;
+      }
+
+      .aura-widget-close {
+        all: unset;
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #9fb3d8;
+        cursor: pointer;
+        border: 1px solid rgba(159, 179, 216, 0.4);
+      }
+
+      .aura-widget-close:hover {
+        color: #ffffff;
+        border-color: rgba(0, 240, 255, 0.7);
+      }
+
+      .aura-widget-panel-body {
+        padding: 12px 18px 16px;
+        color: #c6d7ff;
+        font-size: 13px;
+        overflow: auto;
+      }
+
+      .aura-widget-tag {
+        display: inline-flex;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border: 1px solid rgba(0, 240, 255, 0.4);
+        color: #00f0ff;
+        margin-bottom: 6px;
+      }
+
+      .aura-widget-link {
+        color: #00f0ff;
+        cursor: pointer;
+        font-size: 12px;
+        text-decoration: underline;
+      }
+
+      .aura-widget-link:hover {
+        color: #5fffd3;
+      }
+
+      @media (max-width: 640px) {
+        .aura-widget-button {
+          bottom: 16px;
+          right: 16px;
+        }
+        .aura-widget-button-inner {
+          padding: 9px 16px;
+          font-size: 13px;
+        }
+        .aura-widget-panel {
+          bottom: 72px;
+          right: 16px;
+          width: min(400px, calc(100vw - 24px));
+        }
       }
     `;
     document.head.appendChild(style);
   }
 
-  // -----------------------------
-  // UI elements
-  // -----------------------------
-  let overlayEl = null;
+  // ---------------------------------------------------------------------------
+  // 2) Create DOM elements
+  // ---------------------------------------------------------------------------
+  function createWidget() {
+    injectStyles();
 
-  function closeOverlay() {
-    if (overlayEl && overlayEl.parentNode) {
-      overlayEl.parentNode.removeChild(overlayEl);
-    }
-    overlayEl = null;
-  }
+    const root = document.createElement('div');
+    root.className = 'aura-widget-root aura-widget-reset';
 
-  function openOverlay() {
-    if (overlayEl) return;
-
-    overlayEl = document.createElement('div');
-    overlayEl.className = 'aura-review-overlay';
-
-    overlayEl.innerHTML = `
-      <div class="aura-review-modal">
-        <h3>Share your experience</h3>
-        <p>Help us improve by leaving a quick review.</p>
-
-        <div class="aura-review-field">
-          <label for="aura-review-rating">Rating</label>
-          <select id="aura-review-rating">
-            <option value="5">★★★★★ – 5</option>
-            <option value="4">★★★★☆ – 4</option>
-            <option value="3">★★★☆☆ – 3</option>
-            <option value="2">★★☆☆☆ – 2</option>
-            <option value="1">★☆☆☆☆ – 1</option>
-          </select>
-        </div>
-
-        <div class="aura-review-field">
-          <label for="aura-review-text">Review</label>
-          <textarea id="aura-review-text" placeholder="What do you think?"></textarea>
-        </div>
-
-        <div class="aura-review-actions">
-          <button type="button" class="aura-review-btn-secondary" id="aura-review-cancel">Cancel</button>
-          <button type="button" class="aura-review-btn-primary" id="aura-review-submit">Submit</button>
-        </div>
-
-        <div class="aura-review-status" id="aura-review-status"></div>
-      </div>
-    `;
-
-    document.body.appendChild(overlayEl);
-
-    document
-      .getElementById('aura-review-cancel')
-      .addEventListener('click', closeOverlay);
-
-    document
-      .getElementById('aura-review-submit')
-      .addEventListener('click', submitReview);
-  }
-
-  function createFloatingButton() {
-    if (document.getElementById('aura-review-button')) return;
+    // Floating button wrapper
+    const btnWrapper = document.createElement('div');
+    btnWrapper.className = 'aura-widget-button';
 
     const btn = document.createElement('button');
-    btn.id = 'aura-review-button';
-    btn.className = 'aura-review-button';
-    btn.textContent = 'Reviews';
+    btn.type = 'button';
+    btn.className = 'aura-widget-button-inner';
 
-    btn.addEventListener('click', openOverlay);
+    const dot = document.createElement('span');
+    dot.className = 'aura-widget-pill-dot';
 
-    document.body.appendChild(btn);
-  }
+    const label = document.createElement('span');
+    label.textContent = 'Reviews';
 
-  // -----------------------------
-  // Submit handler
-  // -----------------------------
-  function submitReview() {
-    const ratingEl = document.getElementById('aura-review-rating');
-    const textEl = document.getElementById('aura-review-text');
-    const statusEl = document.getElementById('aura-review-status');
+    btn.appendChild(dot);
+    btn.appendChild(label);
+    btnWrapper.appendChild(btn);
 
-    if (!ratingEl || !textEl) return;
+    // Panel
+    const panel = document.createElement('div');
+    panel.className = 'aura-widget-panel';
+    panel.setAttribute('data-open', 'false');
 
-    const rating = parseInt(ratingEl.value, 10);
-    const text = (textEl.value || '').trim();
+    const header = document.createElement('div');
+    header.className = 'aura-widget-panel-header';
 
-    if (!text) {
-      statusEl.textContent = 'Please write a few words before submitting.';
-      return;
+    const titleWrap = document.createElement('div');
+    const title = document.createElement('div');
+    title.className = 'aura-widget-panel-title';
+    title.textContent = 'AURA • Review UGC Engine';
+
+    const sub = document.createElement('div');
+    sub.className = 'aura-widget-panel-sub';
+    sub.textContent = 'Moderate customer reviews & UGC before they hit your site.';
+
+    titleWrap.appendChild(title);
+    titleWrap.appendChild(sub);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'aura-widget-close';
+    closeBtn.innerHTML = '×';
+
+    header.appendChild(titleWrap);
+    header.appendChild(closeBtn);
+
+    const body = document.createElement('div');
+    body.className = 'aura-widget-panel-body';
+
+    const tag = document.createElement('div');
+    tag.className = 'aura-widget-tag';
+    tag.textContent = 'Reviews enabled';
+
+    const copy = document.createElement('p');
+    copy.textContent =
+      'Your site is connected to the AURA Review UGC Engine. Reviews and photos will be captured via API or integrations and held for moderation.';
+
+    const link = document.createElement('span');
+    link.className = 'aura-widget-link';
+    link.textContent = 'Open moderation dashboard';
+    link.addEventListener('click', function () {
+      window.open('https://review-ugc-engine.onrender.com/admin/ugc', '_blank', 'noopener');
+    });
+
+    body.appendChild(tag);
+    body.appendChild(copy);
+    body.appendChild(link);
+
+    panel.appendChild(header);
+    panel.appendChild(body);
+
+    root.appendChild(btnWrapper);
+    root.appendChild(panel);
+
+    document.body.appendChild(root);
+
+    // -----------------------------------------------------------------------
+    // 3) Wire up interactions
+    // -----------------------------------------------------------------------
+    function togglePanel() {
+      const isOpen = panel.getAttribute('data-open') === 'true';
+      panel.setAttribute('data-open', isOpen ? 'false' : 'true');
     }
 
-    statusEl.textContent = 'Submitting...';
+    btn.addEventListener('click', togglePanel);
+    closeBtn.addEventListener('click', togglePanel);
 
-    const payload = {
-      customerId: null,
-      productId,
-      orderId: null,
-      channel: 'web',
-      type: 'review',
-      rating,
-      text,
-      mediaUrl: null,
-      siteId
-    };
-
-    fetch(serviceBase + '/api/ugc/submit', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(() => {
-        statusEl.textContent = 'Thanks! Your review is pending moderation.';
-        setTimeout(closeOverlay, 1200);
-      })
-      .catch((err) => {
-        console.error('[AURA] Submit error', err);
-        statusEl.textContent =
-          'Sorry, something went wrong. Please try again in a moment.';
-      });
+    // Click outside to close
+    document.addEventListener('click', function (evt) {
+      if (panel.getAttribute('data-open') !== 'true') return;
+      const target = evt.target;
+      if (!panel.contains(target) && !btnWrapper.contains(target)) {
+        panel.setAttribute('data-open', 'false');
+      }
+    });
   }
 
-  // -----------------------------
-  // Boot
-  // -----------------------------
-  function boot() {
-    injectStyles();
-    createFloatingButton();
+  // ---------------------------------------------------------------------------
+  // 4) Initialise when DOM is ready
+  // ---------------------------------------------------------------------------
+  function ready(fn) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fn);
+    } else {
+      fn();
+    }
   }
 
-  if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    boot();
-  } else {
-    document.addEventListener('DOMContentLoaded', boot);
-  }
+  ready(createWidget);
 })();
