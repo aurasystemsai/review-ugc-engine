@@ -6,23 +6,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
-      --bg: #050811;
-      --panel: #070d18;
-      --panel-soft: #0b1220;
-      --border: rgba(0, 240, 255, 0.2);
+      --bg: #05080f;
+      --panel: #070c15;
+      --panel-soft: #0b111c;
+      --border: rgba(0, 240, 255, 0.32);
       --border-soft: rgba(0, 240, 255, 0.12);
       --ink: #e7f6ff;
       --muted: #9fb3d8;
       --accent: #00f0ff;
-      --accent-soft: rgba(0, 240, 255, 0.12);
       --danger: #ff4f6b;
-      --danger-soft: rgba(255, 79, 107, 0.15);
-      --success: #5fffd3;
-      --success-soft: rgba(95, 255, 211, 0.12);
+      --good: #5fffd3;
       --radius-lg: 18px;
-      --radius-md: 12px;
       --radius-pill: 999px;
-      --shadow-soft: 0 26px 60px rgba(0, 0, 0, 0.6);
     }
 
     * {
@@ -31,717 +26,387 @@
 
     body {
       margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter",
-        "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #0b1730 0, #020409 55%, #000 100%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+      background: radial-gradient(circle at top, #051428 0, #030712 52%, #000 100%);
       color: var(--ink);
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
+      padding: 24px;
     }
 
     .shell {
-      width: 100%;
-      max-width: 1200px;
-      padding: 32px 20px 40px;
+      max-width: 1120px;
+      margin: 0 auto;
     }
 
     .header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
+      align-items: center;
       margin-bottom: 24px;
+      gap: 16px;
     }
 
-    .title-block h1 {
-      margin: 0 0 8px;
-      font-size: 24px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .title-block p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      border-radius: var(--radius-pill);
-      background: radial-gradient(circle at top left, #12263e, #040713);
-      border: 1px solid var(--border-soft);
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .pill-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--success);
-      box-shadow: 0 0 12px var(--success);
-    }
-
-    .control-panel {
-      background: linear-gradient(135deg, #050911, #060c18);
-      border-radius: var(--radius-lg);
-      padding: 16px 18px;
-      border: 1px solid var(--border-soft);
-      box-shadow: var(--shadow-soft);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-
-    .field-group {
+    .logo {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      min-width: 160px;
     }
 
-    .field-label {
-      font-size: 12px;
-      color: var(--muted);
-      text-transform: uppercase;
+    .logo-title {
+      font-size: 20px;
+      font-weight: 600;
       letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
     }
 
-    .field-input {
+    .logo-sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .pill {
       border-radius: var(--radius-pill);
       border: 1px solid var(--border-soft);
       padding: 6px 12px;
-      background: #050914;
+      font-size: 12px;
+      color: var(--muted);
+      background: linear-gradient(90deg, rgba(0, 240, 255, 0.12), transparent);
+    }
+
+    .card {
+      background: linear-gradient(145deg, rgba(11, 17, 28, 0.96), rgba(4, 8, 16, 0.98));
+      border-radius: 24px;
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+      padding: 20px;
+    }
+
+    .tabs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      border-radius: var(--radius-pill);
+      border: 1px solid transparent;
+      padding: 8px 14px;
+      font-size: 13px;
+      color: var(--muted);
+      background: rgba(8, 13, 24, 0.9);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.16s ease-out;
+    }
+
+    .tab span.count {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+    }
+
+    .tab.active {
+      border-color: var(--border);
+      background: radial-gradient(circle at top left, rgba(0, 240, 255, 0.16), rgba(8, 13, 24, 0.98));
+      color: var(--ink);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .input {
+      background: rgba(9, 13, 23, 0.96);
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-soft);
+      padding: 7px 12px;
       color: var(--ink);
       font-size: 13px;
+      min-width: 220px;
       outline: none;
     }
 
-    .field-input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.35);
+    .input::placeholder {
+      color: var(--muted);
     }
 
     .btn {
       border-radius: var(--radius-pill);
-      border: 1px solid transparent;
-      padding: 8px 16px;
+      border: 1px solid var(--border-soft);
+      padding: 7px 14px;
       font-size: 13px;
+      background: rgba(8, 13, 24, 0.96);
+      color: var(--ink);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      white-space: nowrap;
-      transition: background 0.12s ease, transform 0.08s ease,
-        box-shadow 0.12s ease, border-color 0.12s ease;
+      transition: all 0.16s ease-out;
     }
 
-    .btn-primary {
-      background: radial-gradient(circle at top, #00f0ff, #00a7ff);
-      color: #020308;
-      font-weight: 600;
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+    .btn.primary {
+      border-color: var(--border);
+      background: linear-gradient(90deg, rgba(0, 240, 255, 0.26), rgba(0, 240, 255, 0.06));
     }
 
-    .btn-primary:hover {
+    .btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 0 26px rgba(0, 240, 255, 0.6);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
     }
 
-    .btn-outline {
-      background: transparent;
-      border-color: var(--border-soft);
-      color: var(--ink);
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
     }
 
-    .btn-outline:hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+    @media (min-width: 920px) {
+      .reviews-grid {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+      }
     }
 
-    .btn-approve {
-      background: var(--success-soft);
-      border-color: var(--success);
-      color: var(--success);
-      font-weight: 500;
+    .review-card {
+      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.96), rgba(10, 15, 28, 0.98));
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(15, 23, 42, 1);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
-    .btn-approve:hover {
-      box-shadow: 0 0 16px rgba(95, 255, 211, 0.5);
-      transform: translateY(-1px);
-    }
-
-    .btn-reject {
-      background: var(--danger-soft);
-      border-color: var(--danger);
-      color: var(--danger);
-      font-weight: 500;
-    }
-
-    .btn-reject:hover {
-      box-shadow: 0 0 16px rgba(255, 79, 107, 0.5);
-      transform: translateY(-1px);
-    }
-
-    .status-bar {
+    .review-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
-      font-size: 12px;
-      color: var(--muted);
+      gap: 4px;
     }
 
-    .status-bar span strong {
-      color: var(--accent);
-    }
-
-    .status-pill {
-      padding: 4px 10px;
+    .pill-sm {
       border-radius: var(--radius-pill);
-      background: var(--accent-soft);
-      border: 1px solid var(--border);
-      color: var(--accent);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-    }
-
-    .tabs {
-      display: inline-flex;
-      gap: 6px;
-      border-radius: var(--radius-pill);
-      padding: 3px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      margin-bottom: 4px;
-    }
-
-    .tab-btn {
-      border-radius: var(--radius-pill);
-      border: none;
-      background: transparent;
-      color: var(--muted);
-      font-size: 11px;
-      padding: 4px 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      cursor: pointer;
-    }
-
-    .tab-btn.active {
-      background: radial-gradient(circle at top, #00f0ff, #00a7ff);
-      color: #020617;
-      box-shadow: 0 0 18px rgba(0, 240, 255, 0.55);
-    }
-
-    .table-shell {
-      background: rgba(3, 7, 18, 0.94);
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border-soft);
-      box-shadow: var(--shadow-soft);
-      overflow: hidden;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    thead {
-      background: linear-gradient(90deg, #050b15, #071325);
-    }
-
-    th,
-    td {
-      padding: 10px 10px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
-      vertical-align: top;
-    }
-
-    th {
-      text-align: left;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-    }
-
-    tbody tr:last-child td {
-      border-bottom: none;
-    }
-
-    .col-meta {
-      width: 160px;
-      font-size: 12px;
-    }
-
-    .col-actions {
-      width: 220px;
-      text-align: right;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
+      border: 1px solid rgba(51, 65, 85, 0.9);
       padding: 2px 8px;
-      border-radius: var(--radius-pill);
-      border: 1px solid var(--border-soft);
       font-size: 11px;
       color: var(--muted);
-      margin-right: 4px;
-      margin-bottom: 4px;
     }
 
-    .badge-strong {
+    .pill-sm.status-pending {
       border-color: var(--accent);
       color: var(--accent);
     }
 
-    .badge-status-approved {
-      border-color: var(--success);
-      color: var(--success);
+    .pill-sm.status-approved {
+      border-color: var(--good);
+      color: var(--good);
     }
 
-    .badge-status-rejected {
+    .pill-sm.status-rejected {
       border-color: var(--danger);
       color: var(--danger);
+    }
+
+    .rating {
+      font-size: 13px;
+      color: var(--good);
     }
 
     .review-text {
       font-size: 13px;
-      line-height: 1.4;
-      margin-bottom: 6px;
+      color: var(--ink);
     }
 
-    .ai-reasons {
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
       font-size: 11px;
       color: var(--muted);
     }
 
-    .notes-input {
-      width: 100%;
-      min-height: 48px;
-      resize: vertical;
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      background: #020712;
-      color: var(--ink);
-      font-size: 12px;
-      padding: 6px 8px;
-      outline: none;
-      margin-bottom: 6px;
-    }
-
-    .notes-input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.35);
-    }
-
-    .notes-readonly {
-      background: #020712;
-      border-style: dashed;
+    .ai-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 11px;
       color: var(--muted);
+      border-top: 1px dashed rgba(30, 64, 175, 0.5);
+      padding-top: 6px;
+      margin-top: 6px;
+    }
+
+    .actions-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .btn-approve {
+      border-color: rgba(34, 197, 94, 0.5);
+      color: var(--good);
+    }
+
+    .btn-reject {
+      border-color: rgba(248, 113, 113, 0.6);
+      color: var(--danger);
     }
 
     .empty-state {
+      padding: 20px;
       text-align: center;
-      padding: 32px 16px;
+      font-size: 13px;
       color: var(--muted);
-      font-size: 14px;
+      border-radius: 16px;
+      border: 1px dashed var(--border-soft);
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.96), rgba(6, 9, 18, 0.98));
+      margin-top: 10px;
     }
 
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 8px;
-      border-radius: var(--radius-pill);
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.4);
+    .status-chip {
+      font-weight: 500;
+    }
+
+    .status-chip.pending { color: var(--accent); }
+    .status-chip.approved { color: var(--good); }
+    .status-chip.rejected { color: var(--danger); }
+
+    .small-label {
       font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
       color: var(--muted);
+      margin-bottom: 4px;
     }
 
-    .chip-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: var(--accent);
+    .loading {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
     }
 
-    .toast {
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
-      background: #020713;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      padding: 10px 14px;
-      font-size: 12px;
-      color: var(--ink);
-      box-shadow: var(--shadow-soft);
-      display: none;
-    }
-
-    .toast-success {
-      border-color: var(--success);
-    }
-
-    .toast-error {
-      border-color: var(--danger);
-    }
-
-    @media (max-width: 800px) {
-      .header {
-        flex-direction: column;
-      }
-      .control-panel {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .col-actions {
-        width: 180px;
-      }
-      table {
-        font-size: 12px;
-      }
-      .review-text {
-        font-size: 12px;
-      }
+    .error {
+      font-size: 13px;
+      color: var(--danger);
+      margin-bottom: 6px;
     }
   </style>
 </head>
 <body>
   <div class="shell">
-    <div class="header">
-      <div class="title-block">
-        <h1>AURA • UGC Moderation Console</h1>
-        <p>Review incoming UGC, approve strong content, and reject spam or low-quality reviews.</p>
+    <header class="header">
+      <div class="logo">
+        <div class="logo-title">AURA • UGC Engine</div>
+        <div class="logo-sub">Moderator console · AI-scored reviews from all widgets.</div>
       </div>
-      <div class="pill">
-        <span class="pill-dot"></span>
-        <span>UGC engine connected · <strong>http://localhost:4001</strong></span>
-      </div>
-    </div>
+      <div class="pill">Connected to Render API</div>
+    </header>
 
-    <div class="control-panel">
-      <div class="field-group">
-        <label class="field-label" for="siteId">Site ID</label>
-        <input
-          id="siteId"
-          class="field-input"
-          type="text"
-          value="demo-site"
-          autocomplete="off"
-        />
+    <main class="card">
+      <div class="tabs">
+        <button class="tab pending active" data-status="pending">
+          Pending
+          <span class="count" id="count-pending">0</span>
+        </button>
+        <button class="tab approved" data-status="approved">
+          Approved
+          <span class="count" id="count-approved">0</span>
+        </button>
+        <button class="tab rejected" data-status="rejected">
+          Rejected
+          <span class="count" id="count-rejected">0</span>
+        </button>
       </div>
-      <div class="field-group">
-        <label class="field-label" for="moderatorId">Moderator ID</label>
-        <input
-          id="moderatorId"
-          class="field-input"
-          type="text"
-          value="darren"
-          autocomplete="off"
-        />
-      </div>
-      <button id="loadBtn" class="btn btn-outline" type="button">
-        ⟳ Load reviews
-      </button>
-      <button id="refreshBtn" class="btn btn-primary" type="button">
-        ⟳ Refresh
-      </button>
-    </div>
 
-    <div class="status-bar">
-      <span>
-        Pending/Approved/Rejected for <strong id="statusSite">demo-site</strong> ·
-        <span id="statusCount">0</span> item(s)
-      </span>
-      <div>
-        <div class="tabs">
-          <button class="tab-btn active" data-status-tab="pending">Pending</button>
-          <button class="tab-btn" data-status-tab="approved">Approved</button>
-          <button class="tab-btn" data-status-tab="rejected">Rejected</button>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <input
+            id="siteIdInput"
+            class="input"
+            type="text"
+            placeholder="Site ID (e.g. demo-site)"
+            value="demo-site"
+          />
+          <button id="refreshBtn" class="btn primary">Refresh</button>
         </div>
-        <span id="statusLabel" class="status-pill">Pending moderation queue</span>
       </div>
-    </div>
 
-    <div class="table-shell">
-      <table>
-        <thead>
-          <tr>
-            <th>ID / Meta</th>
-            <th>Review &amp; AI Analysis</th>
-            <th>Moderator Notes &amp; Actions</th>
-          </tr>
-        </thead>
-        <tbody id="reviewsBody">
-          <tr>
-            <td colspan="3" class="empty-state">
-              No reviews loaded yet. Click
-              <span class="chip">
-                <span class="chip-dot"></span>
-                <span>Load reviews</span>
-              </span>
-              to fetch the queue.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <div id="stateMessage" class="loading">Loading reviews from Render…</div>
+
+      <div class="small-label" id="statusLabel">Showing: Pending</div>
+
+      <div id="reviewsGrid" class="reviews-grid"></div>
+
+      <div id="emptyState" class="empty-state" style="display: none;">
+        No reviews in this status yet for this site.
+      </div>
+    </main>
   </div>
 
-  <div id="toast" class="toast"></div>
-
   <script>
-    const API_BASE = "http://localhost:4001";
+    const API_BASE = "https://review-ugc-engine.onrender.com"; // Render URL
 
-    const siteInput = document.getElementById("siteId");
-    const moderatorInput = document.getElementById("moderatorId");
-    const loadBtn = document.getElementById("loadBtn");
+    const tabs = document.querySelectorAll(".tab");
+    const reviewsGrid = document.getElementById("reviewsGrid");
+    const stateMessage = document.getElementById("stateMessage");
+    const emptyState = document.getElementById("emptyState");
+    const siteIdInput = document.getElementById("siteIdInput");
     const refreshBtn = document.getElementById("refreshBtn");
-    const statusSite = document.getElementById("statusSite");
-    const statusCount = document.getElementById("statusCount");
     const statusLabel = document.getElementById("statusLabel");
-    const reviewsBody = document.getElementById("reviewsBody");
-    const toast = document.getElementById("toast");
-    const tabButtons = document.querySelectorAll("[data-status-tab]");
+
+    const counts = {
+      pending: document.getElementById("count-pending"),
+      approved: document.getElementById("count-approved"),
+      rejected: document.getElementById("count-rejected")
+    };
 
     let currentStatus = "pending";
 
-    function showToast(message, type = "success") {
-      toast.textContent = message;
-      toast.className = "toast " + (type === "success" ? "toast-success" : "toast-error");
-      toast.style.display = "block";
-      setTimeout(() => {
-        toast.style.display = "none";
-      }, 2500);
-    }
-
-    function setStatusLabel() {
-      if (currentStatus === "pending") {
-        statusLabel.textContent = "Pending moderation queue";
-      } else if (currentStatus === "approved") {
-        statusLabel.textContent = "Approved reviews archive";
-      } else if (currentStatus === "rejected") {
-        statusLabel.textContent = "Rejected / spam archive";
+    function setLoading(isLoading, errorMessage) {
+      if (isLoading) {
+        stateMessage.className = "loading";
+        stateMessage.textContent = "Loading reviews from Render…";
+        stateMessage.style.display = "block";
+      } else if (errorMessage) {
+        stateMessage.className = "error";
+        stateMessage.textContent = errorMessage;
+        stateMessage.style.display = "block";
+      } else {
+        stateMessage.style.display = "none";
       }
     }
 
-    function setActiveTab(status) {
-      currentStatus = status;
-      tabButtons.forEach((btn) => {
-        if (btn.getAttribute("data-status-tab") === status) {
-          btn.classList.add("active");
-        } else {
-          btn.classList.remove("active");
-        }
-      });
-      setStatusLabel();
-      loadReviews(currentStatus);
-    }
-
-    async function loadReviews(status) {
-      const siteId = siteInput.value.trim() || "demo-site";
-      statusSite.textContent = siteId;
-
+    function formatDate(ts) {
+      if (!ts) return "-";
       try {
-        const url =
-          API_BASE +
-          "/api/ugc/moderation/all?site_id=" +
-          encodeURIComponent(siteId) +
-          "&status=" +
-          encodeURIComponent(status);
-
-        const res = await fetch(url);
-        if (!res.ok) {
-          throw new Error("Failed to fetch: " + res.status);
-        }
-        const data = await res.json();
-        statusCount.textContent = data.length.toString();
-        renderReviews(data, status);
-      } catch (err) {
-        console.error(err);
-        showToast("Failed to load reviews: " + err.message, "error");
-      }
-    }
-
-    function renderReviews(reviews, statusView) {
-      reviewsBody.innerHTML = "";
-
-      if (!reviews || reviews.length === 0) {
-        const tr = document.createElement("tr");
-        const td = document.createElement("td");
-        td.colSpan = 3;
-        td.className = "empty-state";
-        td.innerHTML =
-          "No " +
-          statusView +
-          " reviews for this site. Fresh items will appear here when UGC arrives.";
-        tr.appendChild(td);
-        reviewsBody.appendChild(tr);
-        return;
-      }
-
-      for (const review of reviews) {
-        const tr = document.createElement("tr");
-        tr.dataset.id = review.id;
-
-        // --- Meta column ---
-        const tdMeta = document.createElement("td");
-        tdMeta.className = "col-meta";
-
-        let statusBadgeClass = "";
-        if ((review.status || "pending") === "approved") {
-          statusBadgeClass = "badge-status-approved";
-        } else if ((review.status || "pending") === "rejected") {
-          statusBadgeClass = "badge-status-rejected";
-        }
-
-        tdMeta.innerHTML = `
-          <div class="badge badge-strong">#${review.id}</div>
-          <div class="badge ${statusBadgeClass}">
-            Status: ${(review.status || "pending").toUpperCase()}
-          </div>
-          <div class="badge">Product: ${review.product_id || "-"}</div>
-          <div class="badge">Customer: ${review.customer_id || "-"}</div>
-          <div class="badge">Rating: ${review.rating ?? "-"}</div>
-          <div style="margin-top:6px;font-size:11px;color:var(--muted);">
-            Created: ${review.created_at || "-"}<br/>
-            Updated: ${review.updated_at || "-"}
-          </div>
-        `;
-
-        // --- Review & AI column ---
-        const tdReview = document.createElement("td");
-        tdReview.innerHTML = `
-          <div class="review-text">${escapeHtml(review.text || "")}</div>
-          ${
-            review.media_url
-              ? `<div style="margin-bottom:6px;">
-                   <a href="${review.media_url}" target="_blank" style="font-size:11px;color:var(--accent);text-decoration:none;">
-                     View media →
-                   </a>
-                 </div>`
-              : ""
-          }
-          <div style="margin-bottom:6px;">
-            <span class="badge">AI score: ${review.ai_score ?? "-"}</span>
-            <span class="badge badge-strong">AI label: ${
-              review.ai_label || "-"
-            }</span>
-          </div>
-          <div class="ai-reasons">${escapeHtml(review.ai_reasons || "")}</div>
-        `;
-
-        // --- Moderator / actions column ---
-        const tdActions = document.createElement("td");
-        tdActions.className = "col-actions";
-
-        const notes = document.createElement("textarea");
-        notes.className = "notes-input";
-        notes.placeholder =
-          statusView === "pending"
-            ? "Reason for decision…"
-            : "Moderator notes…";
-        notes.value = review.moderator_notes || "";
-        if (statusView !== "pending") {
-          notes.readOnly = true;
-          notes.classList.add("notes-readonly");
-        }
-
-        tdActions.appendChild(notes);
-
-        if (statusView === "pending") {
-          const btnApprove = document.createElement("button");
-          btnApprove.className = "btn btn-approve";
-          btnApprove.type = "button";
-          btnApprove.textContent = "Approve";
-
-          const btnReject = document.createElement("button");
-          btnReject.className = "btn btn-reject";
-          btnReject.type = "button";
-          btnReject.style.marginLeft = "6px";
-          btnReject.textContent = "Reject";
-
-          btnApprove.addEventListener("click", () =>
-            moderateReview(review.id, "approve", notes.value)
-          );
-          btnReject.addEventListener("click", () =>
-            moderateReview(review.id, "reject", notes.value)
-          );
-
-          tdActions.appendChild(btnApprove);
-          tdActions.appendChild(btnReject);
-        } else {
-          const meta = document.createElement("div");
-          meta.style.fontSize = "11px";
-          meta.style.color = "var(--muted)";
-          meta.style.marginTop = "4px";
-          meta.textContent =
-            "Moderator: " +
-            (review.moderator_id || "-") +
-            (review.moderator_notes ? " • Notes recorded" : "");
-          tdActions.appendChild(meta);
-        }
-
-        tr.appendChild(tdMeta);
-        tr.appendChild(tdReview);
-        tr.appendChild(tdActions);
-
-        reviewsBody.appendChild(tr);
-      }
-    }
-
-    async function moderateReview(id, action, notes) {
-      const moderatorId = moderatorInput.value.trim() || "moderator";
-      const url =
-        API_BASE + "/api/ugc/moderation/" + encodeURIComponent(id) + "/" + action;
-
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            moderator_id: moderatorId,
-            moderator_notes: notes || null
-          })
-        });
-
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          const message = errorData.error || "Moderation failed with " + res.status;
-          throw new Error(message);
-        }
-
-        const updated = await res.json();
-        showToast("Review #" + updated.id + " " + updated.status, "success");
-
-        // Reload current tab so counts and list stay correct
-        loadReviews(currentStatus);
-      } catch (err) {
-        console.error(err);
-        showToast(err.message, "error");
+        const d = new Date(ts);
+        return d.toLocaleString();
+      } catch {
+        return ts;
       }
     }
 
     function escapeHtml(str) {
-      return String(str)
+      return String(str || "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -749,20 +414,180 @@
         .replace(/'/g, "&#039;");
     }
 
-    loadBtn.addEventListener("click", () => loadReviews(currentStatus));
-    refreshBtn.addEventListener("click", () => loadReviews(currentStatus));
+    function renderReviews(list) {
+      reviewsGrid.innerHTML = "";
 
-    tabButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const status = btn.getAttribute("data-status-tab");
-        setActiveTab(status);
+      counts.pending.textContent = list.filter((r) => (r.status || "pending") === "pending").length;
+      counts.approved.textContent = list.filter((r) => (r.status || "").toLowerCase() === "approved").length;
+      counts.rejected.textContent = list.filter((r) => (r.status || "").toLowerCase() === "rejected").length;
+
+      const filtered = list.filter((r) => {
+        const s = (r.status || "pending").toLowerCase();
+        return s === currentStatus;
+      });
+
+      if (filtered.length === 0) {
+        emptyState.style.display = "block";
+        return;
+      }
+
+      emptyState.style.display = "none";
+
+      for (const r of filtered) {
+        const card = document.createElement("div");
+        card.className = "review-card";
+
+        const status = (r.status || "pending").toLowerCase();
+
+        card.innerHTML = `
+          <div class="review-header">
+            <div>
+              <div class="pill-sm status-${status}">
+                <span class="status-chip ${status}">
+                  ${
+                    status === "pending"
+                      ? "Pending review"
+                      : status === "approved"
+                      ? "Approved"
+                      : "Rejected"
+                  }
+                </span>
+              </div>
+              <div class="meta-row" style="margin-top:4px;">
+                <span>Site: <strong>${r.site_id || "-"}</strong></span>
+                <span>Product: <strong>${r.product_id || "-"}</strong></span>
+                ${
+                  r.order_id
+                    ? `<span>Order: <strong>${r.order_id}</strong></span>`
+                    : ""
+                }
+              </div>
+            </div>
+            <div class="rating">
+              ${r.rating ? "★".repeat(r.rating) : ""}
+            </div>
+          </div>
+
+          <div class="review-text" style="margin-top:4px;">
+            ${escapeHtml(r.text || "")}
+          </div>
+
+          <div class="meta-row">
+            <span>Customer: <strong>${r.customer_id || "-"}</strong></span>
+            <span>Channel: ${r.channel || "web"}</span>
+            <span>Created: ${formatDate(r.created_at)}</span>
+            <span>Updated: ${formatDate(r.updated_at)}</span>
+          </div>
+
+          <div class="ai-row">
+            <span>AI Score: <strong>${typeof r.ai_score === "number" ? r.ai_score.toFixed(2) : "-"}</strong></span>
+            <span>Label: <strong>${r.ai_label || "-"}</strong></span>
+            <span style="flex:1;min-width:100%;">
+              ${escapeHtml(r.ai_reasons || "")}
+            </span>
+          </div>
+
+          ${
+            r.moderator_id || r.moderator_notes
+              ? `<div class="meta-row">
+                  <span>Moderator: <strong>${r.moderator_id || "-"}</strong></span>
+                  <span>Notes: ${escapeHtml(r.moderator_notes || "")}</span>
+                </div>`
+              : ""
+          }
+        `;
+
+        if (status === "pending") {
+          const actions = document.createElement("div");
+          actions.className = "actions-row";
+
+          const approveBtn = document.createElement("button");
+          approveBtn.className = "btn btn-approve";
+          approveBtn.textContent = "Approve";
+          approveBtn.onclick = () =>
+            updateStatus(r.id, "approve", "Moderator", "Approved via console");
+
+          const rejectBtn = document.createElement("button");
+          rejectBtn.className = "btn btn-reject";
+          rejectBtn.textContent = "Reject";
+          rejectBtn.onclick = () =>
+            updateStatus(r.id, "reject", "Moderator", "Rejected via console");
+
+          actions.appendChild(approveBtn);
+          actions.appendChild(rejectBtn);
+          card.appendChild(actions);
+        }
+
+        reviewsGrid.appendChild(card);
+      }
+    }
+
+    async function fetchAll() {
+      const siteId = siteIdInput.value.trim() || "demo-site";
+      setLoading(true);
+
+      try {
+        const url = `${API_BASE}/api/ugc/moderation/all?site_id=${encodeURIComponent(
+          siteId
+        )}&status=all`;
+
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`API error ${res.status}`);
+        }
+
+        const data = await res.json();
+        setLoading(false);
+        renderReviews(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error(err);
+        setLoading(false, "Failed to load reviews from Render.");
+        reviewsGrid.innerHTML = "";
+        emptyState.style.display = "block";
+      }
+    }
+
+    async function updateStatus(id, action, moderatorId, notes) {
+      try {
+        setLoading(true);
+        const url = `${API_BASE}/api/ugc/moderation/${id}/${action}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            moderator_id: moderatorId,
+            moderator_notes: notes
+          })
+        });
+
+        if (!res.ok) {
+          throw new Error(`API error ${res.status}`);
+        }
+
+        await fetchAll();
+      } catch (err) {
+        console.error(err);
+        setLoading(false, "Failed to update review status.");
+      }
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        tabs.forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        currentStatus = tab.dataset.status || "pending";
+        statusLabel.textContent =
+          "Showing: " +
+          currentStatus.charAt(0).toUpperCase() +
+          currentStatus.slice(1);
+        fetchAll();
       });
     });
 
-    // Auto-load pending on first open
-    window.addEventListener("load", () => {
-      setActiveTab("pending");
-    });
+    refreshBtn.addEventListener("click", () => fetchAll());
+
+    // Initial load
+    fetchAll();
   </script>
 </body>
 </html>

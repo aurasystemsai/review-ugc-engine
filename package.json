@@ -1,7 +1,7 @@
 {
   "name": "review-ugc-engine",
   "version": "1.0.0",
-  "description": "AURA Review UGC Engine",
+  "description": "AURA Review UGC Engine (Render + local)",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

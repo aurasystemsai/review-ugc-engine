@@ -6,7 +6,7 @@ const path = require("path");
 const axios = require("axios");
 
 const app = express();
-// Render will inject PORT. Locally we use 4001.
+// Render will inject PORT; locally use 4001
 const PORT = process.env.PORT || 4001;
 
 // URL of AURA Core AI (env in production, localhost in dev)
@@ -20,6 +20,7 @@ const DATA_FILE = path.join(DATA_DIR, "reviews.json");
 // ---------- MIDDLEWARE ----------
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "..", "public"))); // serve admin + widget assets
 
 // ---------- UTIL: ENSURE / LOAD / SAVE ----------
 function ensureDataDir() {
@@ -58,7 +59,7 @@ function loadReviews() {
 function saveReviews(list) {
   try {
     ensureDataDir();
-  fs.writeFileSync(DATA_FILE, JSON.stringify(list, null, 2), "utf8");
+    fs.writeFileSync(DATA_FILE, JSON.stringify(list, null, 2), "utf8");
   } catch (err) {
     console.error("Error saving reviews.json:", err);
   }
@@ -99,7 +100,7 @@ async function scoreWithAuraCore({
   } catch (err) {
     console.error("Error calling AURA Core AI:", err.message);
 
-    const length = text.trim().length;
+    const length = String(text || "").trim().length;
     let baseScore = 0.5;
     if (length > 40) baseScore += 0.2;
     if (rating >= 4) baseScore += 0.2;
@@ -114,7 +115,7 @@ async function scoreWithAuraCore({
         : "likely_spam_or_low_quality";
 
     const ai_reasons =
-      "Fallback scoring used because AURA Core AI was unavailable.";
+      "Fallback heuristic scoring used because AURA Core AI was unavailable.";
 
     return { ai_score, ai_label, ai_reasons };
   }
@@ -123,6 +124,7 @@ async function scoreWithAuraCore({
 // ---------- IN-MEMORY DATA (BACKED BY FILE) ----------
 let pendingReviews = loadReviews();
 
+// Optional demo seed if empty
 if (pendingReviews.length === 0) {
   pendingReviews = [
     {
@@ -180,7 +182,7 @@ app.get("/api/ugc/moderation/all", (req, res) => {
   res.json(list);
 });
 
-// ---------- LEGACY PENDING ----------
+// ---------- LEGACY PENDING (kept for compatibility) ----------
 app.get("/api/ugc/moderation/pending", (req, res) => {
   const siteId = req.query.site_id;
 
@@ -197,7 +199,7 @@ app.get("/api/ugc/moderation/pending", (req, res) => {
 
 // ---------- CREATE REVIEW ----------
 app.post("/api/ugc/submit", async (req, res) => {
-  const body = req.body;
+  const body = req.body || {};
 
   if (!body.site_id || !body.customer_id || !body.product_id || !body.text) {
     return res.status(400).json({
