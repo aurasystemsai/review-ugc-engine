@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "site_id": "demo-site",
+    "customer_id": "cust_001",
+    "product_id": "prod_abc123",
+    "order_id": null,
+    "channel": "web",
+    "type": "review",
+    "rating": 5,
+    "text": "Love this bracelet, still shiny after showers.",
+    "media_url": "https://example.com/bracelet-1.jpg",
+    "status": "pending",
+    "ai_score": 0.93,
+    "ai_label": "looks_real_positive",
+    "ai_reasons": "Natural language, product-specific details, no obvious spam patterns.",
+    "moderator_id": null,
+    "moderator_notes": null,
+    "created_at": "2025-11-29T12:33:41Z",
+    "updated_at": "2025-11-29T12:33:41Z"
+  }
+]
