@@ -130,7 +130,7 @@
       // ---------------- 7. Click → open admin in new tab ----------------
       fab.addEventListener("click", () => {
         const adminUrl =
-          "https://review-ugc-engine.onrender.com/admin/ugc?site_id=" +
+          "https://review-ugc-engine.onrender.com/ugc-admin.html?site_id=" +
           encodeURIComponent(siteId);
         window.open(adminUrl, "_blank", "noopener,noreferrer");
       });
