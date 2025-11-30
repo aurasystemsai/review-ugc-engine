@@ -1,593 +1,644 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>AURA • UGC Moderation Console</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root {
-      --bg: #05080f;
-      --panel: #070c15;
-      --panel-soft: #0b111c;
-      --border: rgba(0, 240, 255, 0.32);
-      --border-soft: rgba(0, 240, 255, 0.12);
-      --ink: #e7f6ff;
-      --muted: #9fb3d8;
-      --accent: #00f0ff;
-      --danger: #ff4f6b;
-      --good: #5fffd3;
-      --radius-lg: 18px;
-      --radius-pill: 999px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-      background: radial-gradient(circle at top, #051428 0, #030712 52%, #000 100%);
-      color: var(--ink);
-      min-height: 100vh;
-      padding: 24px;
-    }
-
-    .shell {
-      max-width: 1120px;
-      margin: 0 auto;
-    }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      gap: 16px;
-    }
-
-    .logo {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .logo-title {
-      font-size: 20px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--accent);
-    }
-
-    .logo-sub {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .pill {
-      border-radius: var(--radius-pill);
-      border: 1px solid var(--border-soft);
-      padding: 6px 12px;
-      font-size: 12px;
-      color: var(--muted);
-      background: linear-gradient(90deg, rgba(0, 240, 255, 0.12), transparent);
-    }
-
-    .card {
-      background: linear-gradient(145deg, rgba(11, 17, 28, 0.96), rgba(4, 8, 16, 0.98));
-      border-radius: 24px;
-      border: 1px solid var(--border-soft);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
-      padding: 20px;
-    }
-
-    .tabs {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
-    }
-
-    .tab {
-      border-radius: var(--radius-pill);
-      border: 1px solid transparent;
-      padding: 8px 14px;
-      font-size: 13px;
-      color: var(--muted);
-      background: rgba(8, 13, 24, 0.9);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.16s ease-out;
-    }
-
-    .tab span.count {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: var(--radius-pill);
-      background: rgba(15, 23, 42, 0.9);
-      color: var(--muted);
-    }
-
-    .tab.active {
-      border-color: var(--border);
-      background: radial-gradient(circle at top left, rgba(0, 240, 255, 0.16), rgba(8, 13, 24, 0.98));
-      color: var(--ink);
-    }
-
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .toolbar-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .input {
-      background: rgba(9, 13, 23, 0.96);
-      border-radius: var(--radius-pill);
-      border: 1px solid var(--border-soft);
-      padding: 7px 12px;
-      color: var(--ink);
-      font-size: 13px;
-      min-width: 220px;
-      outline: none;
-    }
-
-    .input::placeholder {
-      color: var(--muted);
-    }
-
-    .btn {
-      border-radius: var(--radius-pill);
-      border: 1px solid var(--border-soft);
-      padding: 7px 14px;
-      font-size: 13px;
-      background: rgba(8, 13, 24, 0.96);
-      color: var(--ink);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.16s ease-out;
-    }
-
-    .btn.primary {
-      border-color: var(--border);
-      background: linear-gradient(90deg, rgba(0, 240, 255, 0.26), rgba(0, 240, 255, 0.06));
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
-    }
-
-    .reviews-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 10px;
-    }
-
-    @media (min-width: 920px) {
-      .reviews-grid {
-        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+  <head>
+    <meta charset="UTF-8" />
+    <title>AURA • UGC ENGINE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg: #020617;
+        --panel: #020617;
+        --panel-soft: #020617;
+        --border: rgba(56, 189, 248, 0.4);
+        --border-soft: rgba(56, 189, 248, 0.25);
+        --ink: #e5f2ff;
+        --muted: #9fb3d8;
+        --accent: #00f0ff;
+        --accent-strong: #00c4ff;
+        --danger: #fb7185;
+        --good: #4ade80;
+        --radius-lg: 24px;
+        --radius-md: 18px;
+        --radius-pill: 999px;
+        --shadow-soft: 0 26px 60px rgba(0, 0, 0, 0.85);
+        --chip-bg: rgba(15, 23, 42, 0.9);
       }
-    }
 
-    .review-card {
-      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.96), rgba(10, 15, 28, 0.98));
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(15, 23, 42, 1);
-      padding: 12px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+      * {
+        box-sizing: border-box;
+      }
 
-    .review-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 4px;
-    }
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter",
+          sans-serif;
+        background: radial-gradient(circle at top, #020617 0, #020617 45%, #000 100%);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+      }
 
-    .pill-sm {
-      border-radius: var(--radius-pill);
-      border: 1px solid rgba(51, 65, 85, 0.9);
-      padding: 2px 8px;
-      font-size: 11px;
-      color: var(--muted);
-    }
+      .shell {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px 20px 40px;
+      }
 
-    .pill-sm.status-pending {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        gap: 16px;
+      }
 
-    .pill-sm.status-approved {
-      border-color: var(--good);
-      color: var(--good);
-    }
+      .title-block h1 {
+        margin: 0 0 4px;
+        font-size: 22px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
 
-    .pill-sm.status-rejected {
-      border-color: var(--danger);
-      color: var(--danger);
-    }
+      .title-block p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
 
-    .rating {
-      font-size: 13px;
-      color: var(--good);
-    }
+      .status-chip {
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border-soft);
+        font-size: 11px;
+        color: var(--muted);
+        background: linear-gradient(
+          to right,
+          rgba(15, 23, 42, 0.95),
+          rgba(15, 23, 42, 0.75)
+        );
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
 
-    .review-text {
-      font-size: 13px;
-      color: var(--ink);
-    }
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--good);
+        box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.3);
+      }
 
-    .meta-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      font-size: 11px;
-      color: var(--muted);
-    }
+      .console-card {
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-soft);
+        background: radial-gradient(
+          circle at top left,
+          rgba(15, 23, 42, 0.95),
+          rgba(2, 6, 23, 0.98)
+        );
+        box-shadow: var(--shadow-soft);
+        padding: 18px 18px 20px;
+      }
 
-    .ai-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      font-size: 11px;
-      color: var(--muted);
-      border-top: 1px dashed rgba(30, 64, 175, 0.5);
-      padding-top: 6px;
-      margin-top: 6px;
-    }
+      .top-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
 
-    .actions-row {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 6px;
-    }
+      .tabs {
+        display: inline-flex;
+        gap: 8px;
+        border-radius: var(--radius-pill);
+        padding: 4px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(30, 64, 175, 0.6);
+      }
 
-    .btn-approve {
-      border-color: rgba(34, 197, 94, 0.5);
-      color: var(--good);
-    }
+      .tab {
+        border-radius: var(--radius-pill);
+        padding: 5px 12px;
+        font-size: 12px;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
 
-    .btn-reject {
-      border-color: rgba(248, 113, 113, 0.6);
-      color: var(--danger);
-    }
+      .tab span.badge {
+        font-size: 11px;
+        min-width: 18px;
+        text-align: center;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.9);
+      }
 
-    .empty-state {
-      padding: 20px;
-      text-align: center;
-      font-size: 13px;
-      color: var(--muted);
-      border-radius: 16px;
-      border: 1px dashed var(--border-soft);
-      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.96), rgba(6, 9, 18, 0.98));
-      margin-top: 10px;
-    }
+      .tab.active {
+        background: radial-gradient(circle at top left, #00f0ff, #00c4ff);
+        color: #020617;
+      }
 
-    .status-chip {
-      font-weight: 500;
-    }
+      .tab.active span.badge {
+        background: rgba(2, 6, 23, 0.85);
+        color: #e5f2ff;
+      }
 
-    .status-chip.pending { color: var(--accent); }
-    .status-chip.approved { color: var(--good); }
-    .status-chip.rejected { color: var(--danger); }
+      .site-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
 
-    .small-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
+      .site-row label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+      }
 
-    .loading {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
+      #siteIdInput {
+        min-width: 260px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 23, 42, 1);
+        background: rgba(15, 23, 42, 0.95);
+        color: var(--ink);
+        font-size: 13px;
+        outline: none;
+      }
 
-    .error {
-      font-size: 13px;
-      color: var(--danger);
-      margin-bottom: 6px;
-    }
-  </style>
-</head>
-<body>
-  <div class="shell">
-    <header class="header">
-      <div class="logo">
-        <div class="logo-title">AURA • UGC Engine</div>
-        <div class="logo-sub">Moderator console · AI-scored reviews from all widgets.</div>
-      </div>
-      <div class="pill">Connected to Render API</div>
-    </header>
+      #siteIdInput:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.4);
+      }
 
-    <main class="card">
-      <div class="tabs">
-        <button class="tab pending active" data-status="pending">
-          Pending
-          <span class="count" id="count-pending">0</span>
-        </button>
-        <button class="tab approved" data-status="approved">
-          Approved
-          <span class="count" id="count-approved">0</span>
-        </button>
-        <button class="tab rejected" data-status="rejected">
-          Rejected
-          <span class="count" id="count-rejected">0</span>
-        </button>
-      </div>
+      #refreshBtn {
+        border-radius: 999px;
+        padding: 7px 14px;
+        border: 1px solid var(--border);
+        background: radial-gradient(circle at 0% 0%, #00f0ff, #00c4ff);
+        color: #020617;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+      }
 
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <input
-            id="siteIdInput"
-            class="input"
-            type="text"
-            placeholder="Site ID (e.g. demo-site)"
-            value="demo-site"
-          />
-          <button id="refreshBtn" class="btn primary">Refresh</button>
+      #refreshBtn:hover {
+        box-shadow: 0 12px 30px rgba(8, 47, 73, 0.8);
+      }
+
+      .subline {
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .list {
+        border-radius: 18px;
+        border: 1px dashed rgba(51, 65, 85, 0.9);
+        background: radial-gradient(
+          circle at top left,
+          rgba(15, 23, 42, 0.85),
+          rgba(15, 23, 42, 0.95)
+        );
+        padding: 10px 10px 4px;
+        min-height: 120px;
+      }
+
+      .empty {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+        padding: 20px 8px;
+      }
+
+      .review {
+        border-radius: 14px;
+        border: 1px solid rgba(30, 64, 175, 0.6);
+        background: rgba(15, 23, 42, 0.95);
+        padding: 10px 10px 8px;
+        margin-bottom: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 12px;
+      }
+
+      .review-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 2px;
+      }
+
+      .review-main {
+        white-space: normal;
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 2px;
+      }
+
+      .pill {
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 999px;
+        border: 1px solid rgba(30, 64, 175, 0.7);
+        background: rgba(15, 23, 42, 0.9);
+        color: var(--muted);
+      }
+
+      .pill.good {
+        border-color: rgba(22, 163, 74, 0.7);
+        color: #bbf7d0;
+      }
+
+      .pill.danger {
+        border-color: rgba(239, 68, 68, 0.8);
+        color: #fecaca;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 4px;
+      }
+
+      .btn-approve,
+      .btn-reject {
+        font-size: 11px;
+        border-radius: 999px;
+        padding: 4px 8px;
+        border: 1px solid transparent;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .btn-approve {
+        border-color: rgba(22, 163, 74, 0.8);
+        color: #bbf7d0;
+        background: rgba(22, 163, 74, 0.1);
+      }
+
+      .btn-reject {
+        border-color: rgba(248, 113, 113, 0.9);
+        color: #fecaca;
+        background: rgba(127, 29, 29, 0.1);
+      }
+
+      .ai-meta {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .rating {
+        color: #facc15;
+        font-size: 13px;
+      }
+
+      .toast {
+        position: fixed;
+        right: 20px;
+        top: 20px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid var(--border);
+        color: var(--ink);
+        box-shadow: var(--shadow-soft);
+        z-index: 999999;
+      }
+
+      @media (max-width: 720px) {
+        .shell {
+          padding: 20px 14px 30px;
+        }
+        .header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .top-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .site-row {
+          width: 100%;
+        }
+        #siteIdInput {
+          flex: 1;
+          min-width: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="header">
+        <div class="title-block">
+          <h1>AURA • UGC ENGINE</h1>
+          <p>Moderator console · AI-scored reviews from all widgets.</p>
+        </div>
+        <div class="status-chip">
+          <span class="status-dot"></span>
+          <span id="statusLabel">Connected to Render API</span>
         </div>
       </div>
 
-      <div id="stateMessage" class="loading">Loading reviews from Render…</div>
+      <div class="console-card">
+        <div class="top-row">
+          <div class="tabs" id="tabs">
+            <button class="tab active" data-status="pending" id="tabPending">
+              Pending <span class="badge" id="badgePending">0</span>
+            </button>
+            <button class="tab" data-status="approved" id="tabApproved">
+              Approved <span class="badge" id="badgeApproved">0</span>
+            </button>
+            <button class="tab" data-status="rejected" id="tabRejected">
+              Rejected <span class="badge" id="badgeRejected">0</span>
+            </button>
+          </div>
 
-      <div class="small-label" id="statusLabel">Showing: Pending</div>
+          <div class="site-row">
+            <label for="siteIdInput">Site ID</label>
+            <input
+              id="siteIdInput"
+              type="text"
+              placeholder="e.g. domain:clientsite.com"
+              value=""
+            />
+            <button id="refreshBtn">Refresh</button>
+          </div>
+        </div>
 
-      <div id="reviewsGrid" class="reviews-grid"></div>
+        <div class="subline" id="subline">Showing: PENDING</div>
 
-      <div id="emptyState" class="empty-state" style="display: none;">
-        No reviews in this status yet for this site.
+        <div class="list" id="list"></div>
       </div>
-    </main>
-  </div>
+    </div>
 
-  <script>
-    const API_BASE = "https://review-ugc-engine.onrender.com"; // Render URL
+    <script>
+      (function () {
+        const API_BASE = "https://review-ugc-engine.onrender.com";
 
-    const tabs = document.querySelectorAll(".tab");
-    const reviewsGrid = document.getElementById("reviewsGrid");
-    const stateMessage = document.getElementById("stateMessage");
-    const emptyState = document.getElementById("emptyState");
-    const siteIdInput = document.getElementById("siteIdInput");
-    const refreshBtn = document.getElementById("refreshBtn");
-    const statusLabel = document.getElementById("statusLabel");
+        const tabsEl = document.getElementById("tabs");
+        const listEl = document.getElementById("list");
+        const siteIdInput = document.getElementById("siteIdInput");
+        const sublineEl = document.getElementById("subline");
+        const badgePending = document.getElementById("badgePending");
+        const badgeApproved = document.getElementById("badgeApproved");
+        const badgeRejected = document.getElementById("badgeRejected");
+        const refreshBtn = document.getElementById("refreshBtn");
 
-    const counts = {
-      pending: document.getElementById("count-pending"),
-      approved: document.getElementById("count-approved"),
-      rejected: document.getElementById("count-rejected")
-    };
+        let currentStatus = "pending";
 
-    let currentStatus = "pending";
-
-    function setLoading(isLoading, errorMessage) {
-      if (isLoading) {
-        stateMessage.className = "loading";
-        stateMessage.textContent = "Loading reviews from Render…";
-        stateMessage.style.display = "block";
-      } else if (errorMessage) {
-        stateMessage.className = "error";
-        stateMessage.textContent = errorMessage;
-        stateMessage.style.display = "block";
-      } else {
-        stateMessage.style.display = "none";
-      }
-    }
-
-    function formatDate(ts) {
-      if (!ts) return "-";
-      try {
-        const d = new Date(ts);
-        return d.toLocaleString();
-      } catch {
-        return ts;
-      }
-    }
-
-    function escapeHtml(str) {
-      return String(str || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function renderReviews(list) {
-      reviewsGrid.innerHTML = "";
-
-      counts.pending.textContent = list.filter((r) => (r.status || "pending") === "pending").length;
-      counts.approved.textContent = list.filter((r) => (r.status || "").toLowerCase() === "approved").length;
-      counts.rejected.textContent = list.filter((r) => (r.status || "").toLowerCase() === "rejected").length;
-
-      const filtered = list.filter((r) => {
-        const s = (r.status || "pending").toLowerCase();
-        return s === currentStatus;
-      });
-
-      if (filtered.length === 0) {
-        emptyState.style.display = "block";
-        return;
-      }
-
-      emptyState.style.display = "none";
-
-      for (const r of filtered) {
-        const card = document.createElement("div");
-        card.className = "review-card";
-
-        const status = (r.status || "pending").toLowerCase();
-
-        card.innerHTML = `
-          <div class="review-header">
-            <div>
-              <div class="pill-sm status-${status}">
-                <span class="status-chip ${status}">
-                  ${
-                    status === "pending"
-                      ? "Pending review"
-                      : status === "approved"
-                      ? "Approved"
-                      : "Rejected"
-                  }
-                </span>
-              </div>
-              <div class="meta-row" style="margin-top:4px;">
-                <span>Site: <strong>${r.site_id || "-"}</strong></span>
-                <span>Product: <strong>${r.product_id || "-"}</strong></span>
-                ${
-                  r.order_id
-                    ? `<span>Order: <strong>${r.order_id}</strong></span>`
-                    : ""
-                }
-              </div>
-            </div>
-            <div class="rating">
-              ${r.rating ? "★".repeat(r.rating) : ""}
-            </div>
-          </div>
-
-          <div class="review-text" style="margin-top:4px;">
-            ${escapeHtml(r.text || "")}
-          </div>
-
-          <div class="meta-row">
-            <span>Customer: <strong>${r.customer_id || "-"}</strong></span>
-            <span>Channel: ${r.channel || "web"}</span>
-            <span>Created: ${formatDate(r.created_at)}</span>
-            <span>Updated: ${formatDate(r.updated_at)}</span>
-          </div>
-
-          <div class="ai-row">
-            <span>AI Score: <strong>${typeof r.ai_score === "number" ? r.ai_score.toFixed(2) : "-"}</strong></span>
-            <span>Label: <strong>${r.ai_label || "-"}</strong></span>
-            <span style="flex:1;min-width:100%;">
-              ${escapeHtml(r.ai_reasons || "")}
-            </span>
-          </div>
-
-          ${
-            r.moderator_id || r.moderator_notes
-              ? `<div class="meta-row">
-                  <span>Moderator: <strong>${r.moderator_id || "-"}</strong></span>
-                  <span>Notes: ${escapeHtml(r.moderator_notes || "")}</span>
-                </div>`
-              : ""
+        // ---- Site ID init from query (hardcoded snippet passes ?site_id=...) ----
+        (function initSiteIdFromQuery() {
+          try {
+            const params = new URLSearchParams(window.location.search);
+            const qs = params.get("site_id");
+            if (qs) {
+              siteIdInput.value = decodeURIComponent(qs);
+            }
+          } catch (e) {
+            console.warn("[AURA] Failed to read site_id from query:", e);
           }
-        `;
+        })();
 
-        if (status === "pending") {
-          const actions = document.createElement("div");
-          actions.className = "actions-row";
+        function toast(message) {
+          const existing = document.getElementById("auraToast");
+          if (existing) existing.remove();
 
-          const approveBtn = document.createElement("button");
-          approveBtn.className = "btn btn-approve";
-          approveBtn.textContent = "Approve";
-          approveBtn.onclick = () =>
-            updateStatus(r.id, "approve", "Moderator", "Approved via console");
-
-          const rejectBtn = document.createElement("button");
-          rejectBtn.className = "btn btn-reject";
-          rejectBtn.textContent = "Reject";
-          rejectBtn.onclick = () =>
-            updateStatus(r.id, "reject", "Moderator", "Rejected via console");
-
-          actions.appendChild(approveBtn);
-          actions.appendChild(rejectBtn);
-          card.appendChild(actions);
+          const t = document.createElement("div");
+          t.id = "auraToast";
+          t.className = "toast";
+          t.textContent = message;
+          document.body.appendChild(t);
+          setTimeout(() => t.remove(), 2800);
         }
 
-        reviewsGrid.appendChild(card);
-      }
-    }
-
-    async function fetchAll() {
-      const siteId = siteIdInput.value.trim() || "demo-site";
-      setLoading(true);
-
-      try {
-        const url = `${API_BASE}/api/ugc/moderation/all?site_id=${encodeURIComponent(
-          siteId
-        )}&status=all`;
-
-        const res = await fetch(url);
-        if (!res.ok) {
-          throw new Error(`API error ${res.status}`);
+        function getSiteId() {
+          const v = siteIdInput.value.trim();
+          if (!v) {
+            toast("Enter a site ID (e.g. domain:clientsite.com)");
+          }
+          return v;
         }
 
-        const data = await res.json();
-        setLoading(false);
-        renderReviews(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error(err);
-        setLoading(false, "Failed to load reviews from Render.");
-        reviewsGrid.innerHTML = "";
-        emptyState.style.display = "block";
-      }
-    }
+        function setSubline(status) {
+          let label = "PENDING";
+          if (status === "approved") label = "APPROVED";
+          if (status === "rejected") label = "REJECTED";
+          sublineEl.textContent = "Showing: " + label;
+        }
 
-    async function updateStatus(id, action, moderatorId, notes) {
-      try {
-        setLoading(true);
-        const url = `${API_BASE}/api/ugc/moderation/${id}/${action}`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            moderator_id: moderatorId,
-            moderator_notes: notes
+        function setActiveTab(status) {
+          const tabs = tabsEl.querySelectorAll(".tab");
+          tabs.forEach((t) => {
+            if (t.dataset.status === status) {
+              t.classList.add("active");
+            } else {
+              t.classList.remove("active");
+            }
+          });
+        }
+
+        function fetchReviews(status) {
+          const siteId = getSiteId();
+          if (!siteId) {
+            listEl.innerHTML =
+              '<div class="empty">No site selected yet.</div>';
+            return;
+          }
+
+          listEl.innerHTML =
+            '<div class="empty">Loading ' + status + " reviews…</div>";
+
+          const url =
+            API_BASE +
+            "/api/ugc/moderation/" +
+            encodeURIComponent(status) +
+            "?site_id=" +
+            encodeURIComponent(siteId);
+
+          fetch(url, { credentials: "omit" })
+            .then((res) => {
+              if (!res.ok) throw new Error("HTTP " + res.status);
+              return res.json();
+            })
+            .then((data) => {
+              const arr = Array.isArray(data) ? data : [];
+              renderList(status, arr);
+              updateBadge(status, arr.length);
+            })
+            .catch((err) => {
+              console.error("[AURA] Failed to load reviews:", err);
+              listEl.innerHTML =
+                '<div class="empty">Unable to load reviews. Check console for details.</div>';
+            });
+        }
+
+        function updateBadge(status, count) {
+          const n = count || 0;
+          if (status === "pending") badgePending.textContent = n;
+          if (status === "approved") badgeApproved.textContent = n;
+          if (status === "rejected") badgeRejected.textContent = n;
+        }
+
+        function renderList(status, reviews) {
+          if (!reviews.length) {
+            listEl.innerHTML =
+              '<div class="empty">No reviews in this status yet for this site.</div>';
+            return;
+          }
+
+          listEl.innerHTML = "";
+
+          reviews.forEach((r) => {
+            const el = document.createElement("div");
+            el.className = "review";
+
+            const rating =
+              typeof r.rating === "number" && r.rating > 0 ? r.rating : null;
+            const stars = rating
+              ? "★".repeat(rating) + "☆".repeat(Math.max(0, 5 - rating))
+              : "";
+
+            const created = r.created_at || "";
+            const channel = r.channel || "";
+            const type = r.type || "";
+            const label = r.ai_label || "";
+
+            el.innerHTML =
+              '<div class="review-header">' +
+              '<div><strong>' +
+              (r.customer_id || "Customer") +
+              "</strong></div>" +
+              '<div class="rating">' +
+              stars +
+              "</div>" +
+              "</div>" +
+              '<div class="review-main">' +
+              (r.text || "") +
+              "</div>" +
+              '<div class="pill-row">' +
+              (channel
+                ? '<span class="pill">Channel: ' + channel + "</span>"
+                : "") +
+              (type ? '<span class="pill">Type: ' + type + "</span>" : "") +
+              (created
+                ? '<span class="pill">Created: ' + created + "</span>"
+                : "") +
+              (label
+                ? '<span class="pill good">AI: ' + label + "</span>"
+                : "") +
+              "</div>" +
+              '<div class="ai-meta">' +
+              (r.ai_reasons || "") +
+              "</div>";
+
+            if (status === "pending") {
+              const actions = document.createElement("div");
+              actions.className = "actions";
+
+              const approveBtn = document.createElement("button");
+              approveBtn.className = "btn-approve";
+              approveBtn.textContent = "Approve";
+              approveBtn.addEventListener("click", () =>
+                moderate(r.id, "approve")
+              );
+
+              const rejectBtn = document.createElement("button");
+              rejectBtn.className = "btn-reject";
+              rejectBtn.textContent = "Reject";
+              rejectBtn.addEventListener("click", () =>
+                moderate(r.id, "reject")
+              );
+
+              actions.appendChild(approveBtn);
+              actions.appendChild(rejectBtn);
+              el.appendChild(actions);
+            }
+
+            listEl.appendChild(el);
+          });
+        }
+
+        function moderate(id, action) {
+          const siteId = getSiteId();
+          if (!siteId) return;
+          if (!id) return;
+
+          const endpoint =
+            API_BASE +
+            "/api/ugc/moderation/" +
+            encodeURIComponent(id) +
+            "/" +
+            encodeURIComponent(action);
+
+          const payload = {
+            moderator_id: "admin",
+            moderator_notes: action === "approve" ? "Approved" : "Rejected",
+          };
+
+          fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
           })
+            .then((res) => {
+              if (!res.ok) throw new Error("HTTP " + res.status);
+              return res.json();
+            })
+            .then(() => {
+              toast(
+                action === "approve"
+                  ? "Review approved."
+                  : "Review rejected."
+              );
+              fetchReviews(currentStatus);
+            })
+            .catch((err) => {
+              console.error("[AURA] Moderation failed:", err);
+              toast("Moderation failed – see console.");
+            });
+        }
+
+        // ---- events ----
+        tabsEl.addEventListener("click", function (e) {
+          const btn = e.target.closest(".tab");
+          if (!btn) return;
+          const status = btn.dataset.status;
+          if (!status) return;
+          currentStatus = status;
+          setActiveTab(status);
+          setSubline(status);
+          fetchReviews(status);
         });
 
-        if (!res.ok) {
-          throw new Error(`API error ${res.status}`);
-        }
+        refreshBtn.addEventListener("click", function () {
+          fetchReviews(currentStatus);
+        });
 
-        await fetchAll();
-      } catch (err) {
-        console.error(err);
-        setLoading(false, "Failed to update review status.");
-      }
-    }
-
-    tabs.forEach((tab) => {
-      tab.addEventListener("click", () => {
-        tabs.forEach((t) => t.classList.remove("active"));
-        tab.classList.add("active");
-        currentStatus = tab.dataset.status || "pending";
-        statusLabel.textContent =
-          "Showing: " +
-          currentStatus.charAt(0).toUpperCase() +
-          currentStatus.slice(1);
-        fetchAll();
-      });
-    });
-
-    refreshBtn.addEventListener("click", () => fetchAll());
-
-    // Initial load
-    fetchAll();
-  </script>
-</body>
+        // initial load (pending)
+        setSubline("pending");
+        fetchReviews("pending");
+      })();
+    </script>
+  </body>
 </html>

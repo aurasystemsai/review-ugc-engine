@@ -1,12 +1,11 @@
 // public/loader.js
-// AURA • Universal Reviews Loader (Stable Build, relaxed config)
-// - Works everywhere (Framer, Shopify, Webflow, etc.)
-// - Adds a fixed bottom-right floating Reviews button
-// - Fully inline styles (no CSS overrides)
-// - Opens admin in new tab (MVP version)
+// AURA • Universal Reviews Loader (customer-ready, hardcoded site_id)
+// - Merchants paste ONE script tag on their site
+// - MUST provide data-aura-site-id (hardcoded site id)
+// - Adds a fixed bottom-right floating "Reviews" button
+// - Opens the UGC admin console in a new tab for that site
 
 (function () {
-  // ---------------- helper: run when DOM ready ----------------
   function ready(fn) {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", fn);
@@ -17,66 +16,81 @@
 
   ready(async function () {
     try {
-      // ---------------- 1. Prevent duplicate injection ----------------
+      // 1) Prevent duplicate injection
       if (document.getElementById("aura-reviews-fab")) return;
 
-      // Skip admin/dashboard pages (optional safeguard)
       const path = window.location.pathname || "";
-      if (path.startsWith("/admin")) return;
+      if (path.startsWith("/admin")) return; // safety – don’t show inside admin
 
-      // ---------------- 2. Identify the site ----------------
-      const scriptTag = document.currentScript;
-      const siteId =
-        (scriptTag && scriptTag.getAttribute("data-aura-site-id")) ||
-        "domain:" + window.location.hostname;
+      // 2) Determine site_id (HARD-CODED via data attribute)
+      //    If it's missing, we do NOTHING – merchants must supply it.
+      let scriptTag = document.currentScript;
 
-      // ---------------- 3. Try to fetch site config (OPTIONAL) ----------------
-      // If this fails, we STILL show the FAB.
-      let config = null;
-      let reviewsEnabled = true; // default: enabled
+      if (!scriptTag) {
+        const scripts = document.getElementsByTagName("script");
+        if (scripts && scripts.length) {
+          scriptTag = scripts[scripts.length - 1];
+        }
+      }
 
+      if (!scriptTag) {
+        console.warn(
+          "[AURA] loader.js could not find its <script> tag. FAB not injected."
+        );
+        return;
+      }
+
+      const siteIdAttr = scriptTag.getAttribute("data-aura-site-id");
+      if (!siteIdAttr) {
+        console.warn(
+          "[AURA] data-aura-site-id is REQUIRED on the loader <script>. FAB not injected."
+        );
+        return;
+      }
+
+      const siteId = siteIdAttr.trim();
+      if (!siteId) {
+        console.warn(
+          "[AURA] data-aura-site-id is empty. FAB not injected."
+        );
+        return;
+      }
+
+      // 3) OPTIONAL config call – only to allow explicit disable
+      let reviewsEnabled = true;
       const configUrl =
         "https://review-ugc-engine.onrender.com/api/aura-config?site_id=" +
         encodeURIComponent(siteId);
 
       try {
         const res = await fetch(configUrl, { credentials: "omit" });
-
         if (res.ok) {
-          try {
-            config = await res.json();
-            if (
-              config &&
-              config.tools &&
-              config.tools.reviews &&
-              config.tools.reviews.enabled === false
-            ) {
-              reviewsEnabled = false;
-            }
-          } catch (errParse) {
-            console.warn("[AURA] Failed to parse config JSON:", errParse);
+          const cfg = await res.json().catch(() => null);
+          if (
+            cfg &&
+            cfg.tools &&
+            cfg.tools.reviews &&
+            cfg.tools.reviews.enabled === false
+          ) {
+            reviewsEnabled = false;
           }
         } else {
           console.warn("[AURA] Config fetch non-OK:", res.status);
-          // non-OK ⇒ just fall back to default (enabled)
         }
       } catch (err) {
-        console.warn("[AURA] Config request failed:", err);
-        // network error ⇒ fall back to default (enabled)
+        console.warn("[AURA] Config request failed (continuing):", err);
       }
 
-      // ---------------- 4. Stop only if config explicitly disabled reviews ----------------
       if (!reviewsEnabled) {
         console.log("[AURA] Reviews explicitly disabled for site:", siteId);
         return;
       }
 
-      // ---------------- 5. Create floating FAB ----------------
+      // 4) Create floating FAB
       const fab = document.createElement("button");
       fab.id = "aura-reviews-fab";
       fab.type = "button";
 
-      // Inline styles (immune to builders/themes)
       Object.assign(fab.style, {
         position: "fixed",
         right: "24px",
@@ -110,7 +124,6 @@
         fab.style.boxShadow = "0 18px 40px rgba(0,0,0,0.65)";
       };
 
-      // ---------------- 6. Inner elements ----------------
       const dot = document.createElement("span");
       Object.assign(dot.style, {
         display: "inline-block",
@@ -127,7 +140,7 @@
       fab.appendChild(dot);
       fab.appendChild(label);
 
-      // ---------------- 7. Click → open admin in new tab ----------------
+      // 5) Click → open proper admin page for THIS site_id
       fab.addEventListener("click", () => {
         const adminUrl =
           "https://review-ugc-engine.onrender.com/ugc-admin.html?site_id=" +
@@ -135,15 +148,13 @@
         window.open(adminUrl, "_blank", "noopener,noreferrer");
       });
 
-      // ---------------- 8. Add to page ----------------
       document.body.appendChild(fab);
 
-      // ---------------- 9. Debug log ----------------
       setTimeout(() => {
         try {
           const cs = window.getComputedStyle(fab);
           console.log(
-            `[AURA] FAB injected. position=${cs.position} bottom=${cs.bottom} right=${cs.right}`
+            `[AURA] FAB injected for ${siteId}. position=${cs.position} bottom=${cs.bottom} right=${cs.right}`
           );
         } catch (_) {}
       }, 200);
