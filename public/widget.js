@@ -163,11 +163,18 @@
     var container = document.querySelector(selector);
 
     if (!container) {
-      console.error(
-        "[AURA Reviews] Container not found for selector:",
-        selector
-      );
-      return;
+      // If container missing, create it at end of body
+      if (selector.charAt(0) === "#") {
+        var id = selector.slice(1);
+        container = document.createElement("div");
+        container.id = id;
+        document.body.appendChild(container);
+      } else {
+        container = document.createElement("div");
+        container.id = "aura-reviews";
+        document.body.appendChild(container);
+        selector = "#aura-reviews";
+      }
     }
 
     applyBaseStyles();
